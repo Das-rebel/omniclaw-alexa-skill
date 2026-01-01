@@ -1,0 +1,104 @@
+# Testing Sprint Example
+# Focused parallel testing deployment
+
+deployment:
+  name: "Comprehensive Testing Sprint"
+  description: "Deploy multiple testing agents for comprehensive test coverage"
+
+  agents:
+    # Unit Testing Agent
+    - id: "unit-tests"
+      provider: "groq"
+      model: "llama-3.3-70b-versatile"
+      focus: "Unit tests, fast test execution"
+      task_pattern: "task-test-unit-*"
+      priority: "high"
+      max_concurrent: 10
+      cost_efficiency: true
+
+    # Integration Testing Agent
+    - id: "integration-tests"
+      provider: "google"
+      model: "gemini-2.0-flash-exp"
+      focus: "Integration tests, API tests"
+      task_pattern: "task-test-integration-*"
+      priority: "high"
+      max_concurrent: 8
+
+    # E2E Testing Agent
+    - id: "e2e-tests"
+      provider: "anthropic"
+      model: "claude-sonnet-4-20250514"
+      focus: "End-to-end tests, user flows"
+      task_pattern: "task-test-e2e-*"
+      priority: "high"
+      max_concurrent: 3
+
+    # Performance Testing Agent
+    - id: "performance-tests"
+      provider: "openai"
+      model: "gpt-4-turbo"
+      focus: "Performance benchmarks, load tests"
+      task_pattern: "task-test-perf-*|task-test-performance-*"
+      priority: "medium"
+      max_concurrent: 2
+
+    # Security Testing Agent
+    - id: "security-tests"
+      provider: "anthropic"
+      model: "claude-opus-4"
+      focus: "Security audits, vulnerability tests"
+      task_pattern: "task-test-sec-*|task-test-security-*"
+      priority: "critical"
+      max_concurrent: 2
+
+  coordination:
+    sync_interval: 120  # 2 minutes - faster sync for testing
+    checkpoint_interval: 300  # 5 minutes
+    load_balancing: "work-stealing"
+
+  cost_optimization:
+    enabled: true
+    budget_limit: 40.00
+    prefer_cached: true
+    use_faster_models: true
+
+  error_handling:
+    retry_policy: "exponential_backoff"
+    max_retries: 2
+    timeout_per_task: 600  # 10 minutes max per test
+
+  output:
+    directory: ".tmlpd-testing"
+    logs: "testing-logs.json"
+    test_results: "test-results"
+    coverage_reports: "coverage"
+
+  # Test completion criteria
+  quality_gates:
+    unit_tests:
+      - "80%+ code coverage"
+      - "All unit tests passing"
+
+    integration_tests:
+      - "All API endpoints tested"
+      - "Database operations verified"
+
+    e2e_tests:
+      - "Critical user paths covered"
+      - "No failing E2E tests"
+
+    performance_tests:
+      - "Response time < 200ms for 95% requests"
+      - "Load handling verified"
+
+    security_tests:
+      - "No critical vulnerabilities"
+      - "OWASP Top 10 addressed"
+
+  # Test reporting
+  reporting:
+    generate_html_report: true
+    generate_json_report: true
+    include_coverage_badges: true
+    compare_with_baseline: true

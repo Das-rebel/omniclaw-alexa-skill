@@ -1,0 +1,97 @@
+# Full-Stack Development Example
+# This configuration splits work between frontend and backend teams
+
+deployment:
+  name: "Full-Stack App Development"
+  description: "Parallel development of React frontend and Node.js backend"
+
+  agents:
+    # Frontend Team - Claude Sonnet for UI/UX
+    - id: "frontend-lead"
+      provider: "anthropic"
+      model: "claude-sonnet-4-20250514"
+      focus: "React components, Redux state, styling"
+      task_pattern: "task-ui-*|task-frontend-*|task-component-*"
+      priority: "high"
+      max_concurrent: 3
+
+    - id: "frontend-styling"
+      provider: "anthropic"
+      model: "claude-sonnet-4-20250514"
+      focus: "CSS, animations, responsive design"
+      task_pattern: "task-css-*|task-style-*|task-animation-*"
+      priority: "medium"
+      max_concurrent: 4
+
+    # Backend Team - GPT-4 for code efficiency
+    - id: "backend-api"
+      provider: "openai"
+      model: "gpt-4-turbo"
+      focus: "REST API endpoints, business logic"
+      task_pattern: "task-api-*|task-backend-*|task-endpoint-*"
+      priority: "high"
+      max_concurrent: 3
+
+    - id: "backend-database"
+      provider: "openai"
+      model: "gpt-4-turbo"
+      focus: "Database schema, migrations, queries"
+      task_pattern: "task-db-*|task-database-*|task-migration-*"
+      priority: "high"
+      max_concurrent: 2
+
+    # Testing Team - Gemini for speed
+    - id: "testing-frontend"
+      provider: "google"
+      model: "gemini-2.0-flash-exp"
+      focus: "Frontend unit tests, component tests"
+      task_pattern: "task-test-frontend-*|task-test-ui-*"
+      priority: "medium"
+      max_concurrent: 5
+
+    - id: "testing-backend"
+      provider: "google"
+      model: "gemini-2.0-flash-exp"
+      focus: "Backend tests, integration tests"
+      task_pattern: "task-test-backend-*|task-test-api-*"
+      priority: "medium"
+      max_concurrent: 5
+
+  coordination:
+    sync_interval: 180  # 3 minutes
+    conflict_resolution: "priority-based"
+    merge_strategy: "git-merge"
+    checkpoint_interval: 420  # 7 minutes
+
+  cost_optimization:
+    enabled: true
+    budget_limit: 75.00
+    per_agent_budget:
+      frontend-lead: 20.00
+      frontend-styling: 10.00
+      backend-api: 25.00
+      backend-database: 10.00
+      testing-frontend: 5.00
+      testing-backend: 5.00
+
+  output:
+    directory: ".tmlpd-fullstack"
+    logs: "fullstack-logs.json"
+    metrics: "fullstack-metrics.json"
+
+  # Quality gates for completion
+  quality_gates:
+    frontend_complete:
+      - "All components implemented"
+      - "Responsive design verified"
+      - "Accessibility audit passed"
+
+    backend_complete:
+      - "All API endpoints functional"
+      - "Database optimized"
+      - "Error handling complete"
+
+    testing_complete:
+      - "80%+ code coverage"
+      - "All tests passing"
+      - "E2E tests successful"
