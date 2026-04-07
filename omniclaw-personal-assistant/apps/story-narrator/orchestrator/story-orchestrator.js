@@ -3,8 +3,8 @@
  * Uses Claude 4 Sonnet for character-consistent, archetype-aware storytelling
  */
 
-const { withTimeout } = require('../../../../shared/resilience/timeout-wrapper');
-const { retryWithBackoff } = require('../../../../shared/resilience/retry');
+const { withTimeout } = require('../../../shared/resilience/timeout-wrapper');
+const { retryWithBackoff } = require('../../../shared/resilience/retry');
 
 /**
  * Character archetypes with personality traits
@@ -139,7 +139,8 @@ Respond in JSON format only.`;
       isGenerated: true
     };
 
-    this.characters.set(name.toUpperCase().replace(/\s+/g, '_'), customPersona);
+    const key = name.toUpperCase().replace(/\s+/g, '_');
+    this.characters.set(key, customPersona);
     console.log(`[StoryOrchestrator] Persona "${name}" created successfully`);
 
     return customPersona;
@@ -434,9 +435,10 @@ Keep segments 15-25 words for optimal TTS performance.`;
    * @private
    */
   _initializeCharacters(characterList) {
-    this.characters.clear();
-
     for (const charName of characterList) {
+      // Skip if already generated (has custom persona)
+      if (this.characters.has(charName)) continue;
+
       if (CHARACTER_ARCHETYPES[charName]) {
         this.characters.set(charName, {
           name: charName,
