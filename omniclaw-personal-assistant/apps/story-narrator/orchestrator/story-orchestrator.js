@@ -333,8 +333,8 @@ Keep segments 15-25 words for optimal TTS performance.`;
     let buffer = '';
 
     for (const line of lines) {
-      // Extract character tags
-      const characterMatch = line.match(/\[(NARRATOR|HERO|VILLAIN|SIDEKICK|WISE_OLD_MAN)\]/);
+      // Extract character tags - support both predefined and custom characters
+      const characterMatch = line.match(/\[([A-Z_]+)\]/);
       if (characterMatch) {
         if (buffer.trim()) {
           segments.push(this._createSegment(buffer, currentCharacter, currentEmotion, currentScene));
@@ -385,7 +385,7 @@ Keep segments 15-25 words for optimal TTS performance.`;
 
       // Accumulate dialogue
       const cleanLine = line
-        .replace(/\[(NARRATOR|HERO|VILLAIN|SIDEKICK|WISE_OLD_MAN)\]/g, '')
+        .replace(/\[([A-Z_]+)\]/g, '')
         .replace(/\[(angry|whisper|excited|sad|happy|tense|neutral)\]/g, '')
         .replace(/\[SCENE: [^\]]+\]/g, '')
         .replace(/\[PAUSE: \d+(?:\.\d+)?s\]/g, '')
