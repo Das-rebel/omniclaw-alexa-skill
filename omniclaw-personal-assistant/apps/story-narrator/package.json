@@ -1,0 +1,40 @@
+{
+  "name": "@omniclaw/story-narrator",
+  "version": "1.0.0",
+  "description": "Multi-character voice synthesis system with real-time streaming and interactive narratives",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/story-narrator-test.js",
+    "demo": "node examples/quick-demo.js",
+    "demo:quick": "node examples/quick-demo.js quick",
+    "demo:interactive": "node examples/quick-demo.js interactive",
+    "demo:multilang": "node examples/quick-demo.js multilang",
+    "demo:all": "node examples/quick-demo.js all"
+  },
+  "keywords": [
+    "tts",
+    "text-to-speech",
+    "voice-synthesis",
+    "storytelling",
+    "narrator",
+    "elevenlabs",
+    "claude",
+    "ai",
+    "audio",
+    "streaming"
+  ],
+  "author": "OmniClaw Team",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "dotenv": "^16.4.0",
+    "elevenlabs": "^0.16.0",
+    "openai": "^4.68.0"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.32.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
