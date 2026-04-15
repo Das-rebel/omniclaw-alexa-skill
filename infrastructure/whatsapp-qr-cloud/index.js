@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 3000;
 let sock = null;
 let authState = null;
 let saveCreds = null;
+let latestQR = null;         // Raw QR string from Baileys
+let qrGeneratedAt = null;    // Timestamp for expiry check (60s window)
 
 // Ensure auth directory exists
 if (!fs.existsSync(AUTH_DIR)) {
@@ -43,15 +45,28 @@ async function initWhatsApp() {
 
     sock.ev.on('connection.update', async ({ connection, qr, lastDisconnect }) => {
       if (qr) {
-        console.log('[WhatsApp] QR Code available at /whatsapp/qr');
+        latestQR = qr;
+        qrGeneratedAt = Date.now();
+        console.log('[WhatsApp] QR Code received — available at /whatsapp/qr-image (PNG) or /whatsapp/qr (JSON)');
+        // Also save as PNG for dashboard
+        try {
+          const pngBuffer = await qrcode.toBuffer(qr, { type: 'png', width: 400, margin: 2 });
+          const fs = require('fs');
+          const qrPath = path.join(AUTH_DIR, 'qrcode.png');
+          fs.writeFileSync(qrPath, pngBuffer);
+          console.log('[WhatsApp] QR PNG saved to', qrPath);
+        } catch (e) {
+          console.error('[WhatsApp] QR PNG save error:', e.message);
+        }
       }
       if (connection === 'open') {
         console.log('[WhatsApp] Connected');
+        latestQR = null;
+        qrGeneratedAt = null;
       }
       if (connection === 'close') {
         console.log('[WhatsApp] Disconnected, reason:', lastDisconnect?.error);
         if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
-          // Try to reconnect
           setTimeout(initWhatsApp, 5000);
         }
       }
@@ -99,41 +114,57 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Get QR code as image
+// Get QR code — returns raw QR string for programmatic use
 app.get('/whatsapp/qr', async (req, res) => {
   try {
     if (sock?.user) {
       return res.json({ message: 'Already connected', connected: true });
     }
-
-    // Get the QR from socket
-    // QR is available during initial connection setup
-    res.json({
-      message: 'Scan QR at /whatsapp/qr-image endpoint',
-      hint: 'Use /whatsapp/qr-image for base64 PNG'
-    });
+    if (!latestQR) {
+      return res.json({
+        message: 'No QR available. Call POST /whatsapp/connect first to generate one.',
+        hint: 'QR expires in 60 seconds — scan quickly.'
+      });
+    }
+    res.json({ qr: latestQR, expiresAt: qrGeneratedAt ? qrGeneratedAt + 60000 : null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get QR code as base64 PNG
+// Get QR code as base64 PNG image
 app.get('/whatsapp/qr-image', async (req, res) => {
   try {
     if (sock?.user) {
       return res.json({ message: 'Already connected', connected: true });
     }
-
-    // Trigger new QR by reconnecting
-    if (!sock?.ws?.readyState) {
-      await initWhatsApp();
+    if (!latestQR) {
+      // Try to reconnect and generate a fresh QR
+      if (!sock?.ws?.readyState) {
+        try {
+          await initWhatsApp();
+          // Wait a moment for QR to be emitted
+          await new Promise(r => setTimeout(r, 2000));
+        } catch (e) {
+          // Connection may already be in progress
+        }
+      }
+      if (!latestQR) {
+        return res.json({
+          status: 'waiting',
+          message: 'QR not yet available. Call POST /whatsapp/connect first, then retry this endpoint.'
+        });
+      }
     }
 
-    // The QR should be in the connection update
-    // For now, return waiting status
+    // Generate PNG from QR string
+    const pngBuffer = await qrcode.toBuffer(latestQR, { type: 'png', width: 400, margin: 2 });
+    const base64 = pngBuffer.toString('base64');
     res.json({
-      status: 'checking',
-      message: 'If not connected, please call /whatsapp/connect first'
+      qr: `data:image/png;base64,${base64}`,
+      raw: latestQR,
+      expiresAt: qrGeneratedAt ? qrGeneratedAt + 60000 : null,
+      hint: 'Image format — embed in <img> tag or open directly in browser'
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -270,11 +301,19 @@ app.get('/whatsapp/dashboard', (req, res) => {
     <strong>Status:</strong> Checking...
   </div>
 
+  <div id="qrSection" style="display:none; text-align:center;">
+    <h2>Scan QR Code</h2>
+    <p style="color:#ffaa00;">QR expires in 60 seconds — scan quickly!</p>
+    <img id="qrImage" src="" alt="QR Code" style="border:4px solid #00d4ff; border-radius:8px; max-width:300px;" />
+    <br><br>
+    <button onclick="refreshQR()" style="background:#ff6600;">Refresh QR</button>
+  </div>
+
   <button id="connectBtn" onclick="connect()">Connect WhatsApp</button>
 
   <div id="sendSection" style="display:none;">
     <h2>Send Message</h2>
-    <input type="text" id="to" placeholder="Phone number (91XXXXXXXXXX)">
+    <input type="text" id="to" placeholder="Phone number or contact name">
     <textarea id="message" placeholder="Message text" rows="3"></textarea>
     <button onclick="sendMessage()">Send Message</button>
   </div>
@@ -292,17 +331,20 @@ app.get('/whatsapp/dashboard', (req, res) => {
         const statusEl = document.getElementById('status');
         const connectBtn = document.getElementById('connectBtn');
         const sendSection = document.getElementById('sendSection');
+        const qrSection = document.getElementById('qrSection');
 
         if (data.connected) {
           statusEl.className = 'status connected';
           statusEl.innerHTML = '<strong>Connected</strong> - ' + (data.phone || data.name || 'WhatsApp');
           connectBtn.style.display = 'none';
+          qrSection.style.display = 'none';
           sendSection.style.display = 'block';
           loadChats();
         } else {
           statusEl.className = 'status disconnected';
           statusEl.innerHTML = '<strong>Not Connected</strong> - Click Connect to scan QR';
           connectBtn.style.display = 'block';
+          qrSection.style.display = 'none';
           sendSection.style.display = 'none';
         }
       } catch (e) {
@@ -313,20 +355,77 @@ app.get('/whatsapp/dashboard', (req, res) => {
     async function connect() {
       const btn = document.getElementById('connectBtn');
       btn.disabled = true;
-      btn.textContent = 'Connecting...';
+      btn.textContent = 'Connecting (generating QR)...';
       try {
         const res = await fetch('/whatsapp/connect', { method: 'POST' });
         const data = await res.json();
-        if (data.success) {
-          updateStatus();
-        } else {
-          alert('Connection failed: ' + data.error);
+        if (data.error && !data.success && !data.connected) {
+          alert('Connection failed: ' + (data.error || 'Unknown error'));
         }
+        // Regardless, start polling for QR or connection
+        pollQR();
       } catch (e) {
         alert('Error: ' + e.message);
       }
       btn.disabled = false;
       btn.textContent = 'Connect WhatsApp';
+    }
+
+    async function pollQR() {
+      const qrImage = document.getElementById('qrImage');
+      const qrSection = document.getElementById('qrSection');
+      const connectBtn = document.getElementById('connectBtn');
+      const statusEl = document.getElementById('status');
+
+      qrSection.style.display = 'block';
+      connectBtn.style.display = 'none';
+      statusEl.innerHTML = '<strong>Scan the QR code below with WhatsApp</strong>';
+
+      // Poll for QR image every 2 seconds
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch('/whatsapp/qr-image');
+          const data = await res.json();
+
+          if (data.qr && data.qr.startsWith('data:image')) {
+            qrImage.src = data.qr;
+            clearInterval(interval);
+            // Also start polling status to detect when connected
+            startStatusPolling();
+          } else if (data.connected) {
+            clearInterval(interval);
+            updateStatus();
+          }
+        } catch (e) {
+          console.error('QR poll error:', e);
+        }
+      }, 2000);
+
+      // Also poll /whatsapp/status to detect successful scan
+      function startStatusPolling() {
+        const statusInterval = setInterval(async () => {
+          try {
+            const res = await fetch('/whatsapp/status');
+            const data = await res.json();
+            if (data.connected) {
+              clearInterval(statusInterval);
+              clearInterval(interval);
+              updateStatus();
+            }
+          } catch (e) {}
+        }, 1500);
+      }
+    }
+
+    async function refreshQR() {
+      const btn = document.querySelector('button[onclick="refreshQR()"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Refreshing...'; }
+      try {
+        await fetch('/whatsapp/connect', { method: 'POST' });
+        pollQR();
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Refresh QR'; }
+      }
     }
 
     async function sendMessage() {

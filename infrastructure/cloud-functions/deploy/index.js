@@ -1623,6 +1623,100 @@ exports.alexaHandler = async (req, res) => {
         }
       }
 
+      // WhatsAppIntent - Send a WhatsApp message
+      // Slots: Recipient (phone number or name), Message (text to send)
+      if (intentName === 'WhatsAppIntent') {
+        const recipient = slots.Recipient?.value || slots.To?.value || slots.Phone?.value;
+        const message = slots.Message?.value || slots.Text?.value || slots.Content?.value;
+
+        if (!recipient || !message) {
+          res.json({
+            version: '1.0',
+            response: {
+              outputSpeech: { type: 'PlainText', text: 'To send a WhatsApp message, please specify both the recipient and the message. For example: send a WhatsApp message to Subho saying hello.' },
+              shouldEndSession: false
+            }
+          });
+          return;
+        }
+
+        // Resolve recipient name to phone number if needed
+        let resolvedPhone = recipient;
+        try {
+          const whatsappServiceUrl = process.env.WHATSAPP_SERVICE_URL || 'http://localhost:9377';
+          const statusRes = await fetch(`${whatsappServiceUrl}/whatsapp/status`);
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            // Try to find contact by name
+            if (statusData.connected) {
+              const contactsRes = await fetch(`${whatsappServiceUrl}/whatsapp/contacts`);
+              if (contactsRes.ok) {
+                const contactsData = await contactsRes.json();
+                const matchedContact = contactsData.contacts?.find(
+                  c => c.name?.toLowerCase().includes(recipient.toLowerCase())
+                );
+                if (matchedContact) {
+                  resolvedPhone = matchedContact.id.split('@')[0];
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Service not reachable — continue with raw recipient
+        }
+
+        try {
+          const whatsappServiceUrl = process.env.WHATSAPP_SERVICE_URL || 'http://localhost:9377';
+          const sendRes = await fetch(`${whatsappServiceUrl}/whatsapp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: resolvedPhone, message })
+          });
+
+          if (sendRes.ok) {
+            const result = await sendRes.json();
+            if (result.success) {
+              res.json({
+                version: '1.0',
+                response: {
+                  outputSpeech: { type: 'PlainText', text: `WhatsApp message sent to ${recipient}: ${message}` },
+                  shouldEndSession: false
+                }
+              });
+            } else {
+              res.json({
+                version: '1.0',
+                response: {
+                  outputSpeech: { type: 'PlainText', text: `Failed to send WhatsApp message: ${result.error}` },
+                  shouldEndSession: false
+                }
+              });
+            }
+          } else {
+            const errorText = await sendRes.text();
+            console.error('WhatsApp send error:', errorText);
+            res.json({
+              version: '1.0',
+              response: {
+                outputSpeech: { type: 'PlainText', text: 'WhatsApp is not connected. Please scan the QR code first at the WhatsApp dashboard.' },
+                shouldEndSession: false
+              }
+            });
+          }
+          return;
+        } catch (e) {
+          console.error('WhatsApp error:', e.message);
+          res.json({
+            version: '1.0',
+            response: {
+              outputSpeech: { type: 'PlainText', text: 'WhatsApp service is unavailable. Please ensure the WhatsApp QR service is running.' },
+              shouldEndSession: false
+            }
+          });
+          return;
+        }
+      }
+
       // RedditIntent - Search Reddit for posts
       if (intentName === 'RedditIntent') {
         const query = slots.Query?.value || 'all';

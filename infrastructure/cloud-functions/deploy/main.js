@@ -103,6 +103,70 @@ app.post('/scrape/instagram', async (req, res) => {
   }
 });
 
+// WhatsApp proxy routes — forward to standalone whatsapp-qr-cloud service
+// The cloud function acts as an API gateway; Baileys socket runs as a long-running service
+const WHATSAPP_SERVICE_URL = process.env.WHATSAPP_SERVICE_URL || 'http://localhost:9377';
+
+function proxyToWhatsApp(req, res, options = {}) {
+  const { method = 'GET', path, body } = options;
+  const targetPath = path || req.path.replace(/^\/whatsapp/, '/whatsapp');
+  const url = `${WHATSAPP_SERVICE_URL}${targetPath}`;
+
+  console.log(`[WhatsApp Proxy] ${method} ${url}`);
+
+  const fetchOptions = {
+    method,
+    headers: {
+      'Content-Type': req.headers['content-type'] || 'application/json'
+    }
+  };
+  if (body) fetchOptions.body = JSON.stringify(body);
+  if (['POST', 'PUT', 'PATCH'].includes(method) && req.body) fetchOptions.body = JSON.stringify(req.body);
+
+  fetch(url, fetchOptions)
+    .then(whatsappRes => {
+      res.status(whatsappRes.status);
+      // Copy CORS headers
+      res.set('Access-Control-Allow-Origin', '*');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type');
+      return whatsappRes.json();
+    })
+    .then(data => res.json(data))
+    .catch(err => {
+      console.error('[WhatsApp Proxy] Error:', err.message);
+      res.status(503).json({ error: 'WhatsApp service unavailable', detail: err.message });
+    });
+}
+
+// WhatsApp routes
+app.get('/whatsapp/status', (req, res) => proxyToWhatsApp(req, res));
+app.get('/whatsapp/contacts', (req, res) => proxyToWhatsApp(req, res));
+app.get('/whatsapp/chats', (req, res) => proxyToWhatsApp(req, res));
+app.get('/whatsapp/qr-image', (req, res) => proxyToWhatsApp(req, res));
+app.post('/whatsapp/send', (req, res) => proxyToWhatsApp(req, res, { method: 'POST' }));
+app.post('/whatsapp/connect', (req, res) => proxyToWhatsApp(req, res, { method: 'POST' }));
+
+// QR code as base64 PNG image
+app.get('/whatsapp/qr', async (req, res) => {
+  try {
+    const url = `${WHATSAPP_SERVICE_URL}/whatsapp/qr-image`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.qr) {
+      // Return QR as JSON with the raw base64 string
+      res.json({ qr: data.qr });
+    } else if (data.connected) {
+      res.json({ message: 'Already connected', connected: true });
+    } else {
+      res.json({ message: 'Scan QR at /whatsapp/qr-image', hint: 'Call /whatsapp/connect first' });
+    }
+  } catch (err) {
+    res.status(503).json({ error: 'WhatsApp service unavailable' });
+  }
+});
+
 // Export handlers for Cloud Functions Gen 2
 // These are invoked by the Cloud Functions framework
 exports.alexaHandler = (req, res) => {
