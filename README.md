@@ -22,8 +22,10 @@ OmniClaw is a production-grade personal assistant that unifies multiple AI capab
 - **AI Orchestration**: HALO-style routing across multiple LLM providers
 - **Vision-Language Tagging**: Automatic content tagging for searchable vault
 - **Voice Control**: Natural language commands via Alexa
+- **Multi-Language Support**: English, Hindi (हिंदी), Bengali (বাংলা), Hinglish
 - **Self-Healing**: Circuit breaker pattern with automatic failover
 - **Knowledge Graph**: Cross-session learning and semantic search
+- **Persona-Based Responses**: Named AI characters with distinct personalities
 
 ---
 
@@ -63,6 +65,26 @@ OmniClaw
 | **KodiIntent** | Media center control | MediaMaster (33) |
 | **KnowledgeGraphIntent** | Vault search across saved content | Sage (40) |
 | **GeneralIntent** | Web search and general queries | Sage (40) |
+
+### Multi-Language Support
+
+| Language | Code | Status | Example |
+|----------|------|--------|---------|
+| **English** | en | ✅ Full | "What's the weather?" |
+| **Hindi** | hi | ✅ Full | "आज मौसम कैसा है?" |
+| **Bengali** | bn | ✅ Full | "আজকের আবহাওয়া কেমন?" |
+| **Hinglish** | hi-en | ✅ Full | "Aaj weather kaisa hai?" |
+
+### Voice Personas
+
+Each voice capability uses a distinct persona style:
+
+| Capability | Persona | Accent | Description |
+|------------|---------|--------|-------------|
+| **Story Narrator** | StoryWeaver | Indian-English | Animated, expressive storytelling |
+| **Weather** | Sage | Neutral | Clear, professional forecasts |
+| **Music Control** | DJ Vibe | Casual | Energetic, music-focused |
+| **General** | Sage | Balanced | Calm, helpful assistant |
 
 ---
 
@@ -165,9 +187,16 @@ npm test -- --grep "WikipediaIntent"
 
 ## Documentation
 
-- [Capabilities Architecture](docs/capabilities.svg)
+- [Capabilities Architecture](docs/architecture.svg) - Visual overview of all capabilities
+- [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md) - Detailed technical architecture
 - [Persona System](infrastructure/cloud-functions/deploy/shared/persona/)
 - [HALO Orchestration](infrastructure/cloud-functions/deploy/shared/halo/)
+
+### Try It
+
+**Story Narrator Demo**: Ask Alexa to "tell me a story about a brave warrior and a wise dragon" to hear the persona-based multi-character narration in action.
+
+![Capabilities Overview](docs/architecture.svg)
 
 ---
 
