@@ -8,6 +8,8 @@
 [![Cloud Functions](https://img.shields.io/badge/Cloud-GCP-brightgreen.svg)](#)
 [![AI powered](https://img.shields.io/badge/AI-powered-purple.svg)](#)
 
+![OmniClaw vs Alternatives](docs/comparison.png)
+
 </div>
 
 ---
