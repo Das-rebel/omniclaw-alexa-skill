@@ -1,0 +1,80 @@
+{
+  "collections": {
+    "users": {
+      "description": "User profiles and preferences",
+      "fields": {
+        "userId": "string",
+        "email": "string",
+        "preferences": "map",
+        "createdAt": "timestamp",
+        "updatedAt": "timestamp"
+      },
+      "indexes": [["email", "ASC"]]
+    },
+    "sessions": {
+      "description": "Alexa session state",
+      "fields": {
+        "sessionId": "string",
+        "userId": "string",
+        "state": "map",
+        "createdAt": "timestamp",
+        "expiresAt": "timestamp"
+      },
+      "indexes": [["userId", "ASC"], ["expiresAt", "ASC"]],
+      "ttl": "86400"
+    },
+    "emails": {
+      "description": "Email metadata (30-day retention)",
+      "fields": {
+        "emailId": "string",
+        "userId": "string",
+        "from": "string",
+        "subject": "string",
+        "summary": "string",
+        "priority": "string",
+        "createdAt": "timestamp"
+      },
+      "indexes": [["userId", "DESC"], ["createdAt", "DESC"]],
+      "ttl": "2592000"
+    },
+    "products": {
+      "description": "Tracked products for price monitoring",
+      "fields": {
+        "productId": "string",
+        "userId": "string",
+        "url": "string",
+        "platform": "string",
+        "title": "string",
+        "threshold": "number",
+        "createdAt": "timestamp"
+      },
+      "indexes": [["userId", "ASC"], ["platform", "ASC"]]
+    },
+    "prices": {
+      "description": "Price history (2-year retention)",
+      "fields": {
+        "priceId": "string",
+        "productId": "string",
+        "price": "number",
+        "currency": "string",
+        "timestamp": "timestamp",
+        "source": "string"
+      },
+      "indexes": [["productId", "DESC"], ["timestamp", "DESC"]],
+      "ttl": "63072000"
+    },
+    "stories": {
+      "description": "Story sessions and bookmarks",
+      "fields": {
+        "storyId": "string",
+        "userId": "string",
+        "title": "string",
+        "content": "string",
+        "characters": "array",
+        "bookmarks": "array",
+        "createdAt": "timestamp"
+      },
+      "indexes": [["userId", "DESC"], ["createdAt", "DESC"]]
+    }
+  }
+}

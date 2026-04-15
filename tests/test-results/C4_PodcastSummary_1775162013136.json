@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "sessionAttributes": {
+    "lastQuery": ""
+  },
+  "response": {
+    "outputSpeech": {
+      "type": "PlainText",
+      "text": "Which podcast would you like me to summarize? You can say something like \"summarize the latest Dwarkesh podcast\" or \"tell me about the podcast with Terence Tao\"."
+    },
+    "shouldEndSession": false
+  }
+}

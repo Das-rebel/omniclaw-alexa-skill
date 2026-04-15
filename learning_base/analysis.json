@@ -1,0 +1,189 @@
+{
+  "platforms": [
+    "twitter",
+    "instagram"
+  ],
+  "timestamp": "2026-04-10T08:09:34.656Z",
+  "crossPlatformInsights": {
+    "themes": [],
+    "patterns": [],
+    "insights": []
+  },
+  "visualAnalysis": {
+    "contentTypes": {
+      "twitter": {
+        "mediaTypes": [],
+        "themes": [],
+        "descriptions": []
+      },
+      "instagram": {
+        "colors": [],
+        "composition": [],
+        "themes": [],
+        "aesthetics": []
+      }
+    },
+    "colorPreferences": [],
+    "aestheticThemes": [],
+    "visualPatterns": []
+  },
+  "learningPatterns": {
+    "interests": [],
+    "skills": [],
+    "gaps": [],
+    "patterns": []
+  },
+  "recommendations": {
+    "content": [],
+    "learning": [],
+    "communities": [],
+    "projects": []
+  },
+  "knowledgeGraph": {
+    "nodes": [
+      {
+        "id": "twitter_ai_topic",
+        "name": "Artificial Intelligence",
+        "type": "topic",
+        "platform": "twitter",
+        "confidence": 0.9,
+        "mentions": 45,
+        "createdAt": "2026-04-09T21:13:49.937Z",
+        "updatedAt": "2026-04-09T21:13:49.937Z",
+        "accessCount": 0,
+        "lastAccessed": null
+      },
+      {
+        "id": "twitter_skill_python",
+        "name": "Python Programming",
+        "type": "skill",
+        "platform": "twitter",
+        "confidence": 0.85,
+        "mentions": 32,
+        "createdAt": "2026-04-09T21:13:49.938Z",
+        "updatedAt": "2026-04-09T21:13:49.938Z",
+        "accessCount": 0,
+        "lastAccessed": null
+      },
+      {
+        "id": "instagram_ai_visual",
+        "name": "AI Visual Art",
+        "type": "topic",
+        "platform": "instagram",
+        "confidence": 0.75,
+        "saves": 28,
+        "createdAt": "2026-04-09T21:13:49.938Z",
+        "updatedAt": "2026-04-09T21:13:49.938Z",
+        "accessCount": 0,
+        "lastAccessed": null
+      },
+      {
+        "id": "instagram_skill_design",
+        "name": "Graphic Design",
+        "type": "skill",
+        "platform": "instagram",
+        "confidence": 0.82,
+        "saves": 41,
+        "createdAt": "2026-04-09T21:13:49.938Z",
+        "updatedAt": "2026-04-09T21:13:49.938Z",
+        "accessCount": 0,
+        "lastAccessed": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "twitter_ai_topic-twitter_skill_python",
+        "from": "twitter_ai_topic",
+        "to": "twitter_skill_python",
+        "type": "related_to",
+        "strength": 0.8,
+        "platform": "twitter",
+        "createdAt": "2026-04-09T21:13:49.938Z"
+      },
+      {
+        "id": "instagram_ai_visual-instagram_skill_design",
+        "from": "instagram_ai_visual",
+        "to": "instagram_skill_design",
+        "type": "incorporates",
+        "strength": 0.9,
+        "platform": "instagram",
+        "createdAt": "2026-04-09T21:13:49.938Z"
+      },
+      {
+        "id": "twitter_ai_topic-instagram_ai_visual",
+        "from": "twitter_ai_topic",
+        "to": "instagram_ai_visual",
+        "type": "cross_platform",
+        "strength": 0.7,
+        "discovered_via": "semantic_analysis",
+        "createdAt": "2026-04-09T21:13:49.938Z"
+      },
+      {
+        "id": "undefined-undefined",
+        "source": "twitter_skill_python",
+        "target": "instagram_skill_design",
+        "type": "related",
+        "weight": 0.5,
+        "createdAt": "2026-04-10T08:09:37.317Z",
+        "strength": 0.5
+      }
+    ],
+    "clusters": [
+      [
+        {
+          "id": "twitter_ai_topic",
+          "name": "Artificial Intelligence",
+          "type": "topic",
+          "platform": "twitter",
+          "confidence": 0.9,
+          "mentions": 45,
+          "createdAt": "2026-04-09T21:13:49.937Z",
+          "updatedAt": "2026-04-09T21:13:49.937Z",
+          "accessCount": 0,
+          "lastAccessed": null
+        },
+        {
+          "id": "twitter_skill_python",
+          "name": "Python Programming",
+          "type": "skill",
+          "platform": "twitter",
+          "confidence": 0.85,
+          "mentions": 32,
+          "createdAt": "2026-04-09T21:13:49.938Z",
+          "updatedAt": "2026-04-09T21:13:49.938Z",
+          "accessCount": 0,
+          "lastAccessed": null
+        },
+        {
+          "id": "instagram_ai_visual",
+          "name": "AI Visual Art",
+          "type": "topic",
+          "platform": "instagram",
+          "confidence": 0.75,
+          "saves": 28,
+          "createdAt": "2026-04-09T21:13:49.938Z",
+          "updatedAt": "2026-04-09T21:13:49.938Z",
+          "accessCount": 0,
+          "lastAccessed": null
+        },
+        {
+          "id": "instagram_skill_design",
+          "name": "Graphic Design",
+          "type": "skill",
+          "platform": "instagram",
+          "confidence": 0.82,
+          "saves": 41,
+          "createdAt": "2026-04-09T21:13:49.938Z",
+          "updatedAt": "2026-04-09T21:13:49.938Z",
+          "accessCount": 0,
+          "lastAccessed": null
+        }
+      ]
+    ],
+    "metadata": {
+      "totalNodes": 4,
+      "totalEdges": 4,
+      "lastUpdated": "2026-04-10T08:09:37.317Z"
+    }
+  }
+}

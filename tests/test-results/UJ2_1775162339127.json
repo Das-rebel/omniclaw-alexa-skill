@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "steps": [
+    {
+      "test_id": "UJ2_research",
+      "passed": true,
+      "duration": 43,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:59.042Z"
+    },
+    {
+      "test_id": "UJ2_wikipedia",
+      "passed": true,
+      "duration": 43,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:59.086Z"
+    },
+    {
+      "test_id": "UJ2_translate",
+      "passed": true,
+      "duration": 39,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:59.126Z"
+    }
+  ],
+  "total_steps": 3,
+  "passed_steps": 3
+}

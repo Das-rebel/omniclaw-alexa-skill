@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "steps": [
+    {
+      "test_id": "UJ1_launch",
+      "passed": true,
+      "duration": 40,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "Welcome to Personal Assistant! I can help you with news, Twitter searches, podcast summaries, and more. What would you like to know?"
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:57.915Z"
+    },
+    {
+      "test_id": "UJ1_news",
+      "passed": true,
+      "duration": 45,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:57.960Z"
+    },
+    {
+      "test_id": "UJ1_twitter",
+      "passed": true,
+      "duration": 38,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:38:57.998Z"
+    }
+  ],
+  "total_steps": 3,
+  "passed_steps": 3
+}

@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "sessionAttributes": {
+    "lastQuery": ""
+  },
+  "response": {
+    "outputSpeech": {
+      "type": "PlainText",
+      "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+    },
+    "shouldEndSession": false
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "summary": {
+    "total": 12,
+    "passed": 8,
+    "failed": 4,
+    "skipped": 0,
+    "pass_rate": "66.67%"
+  },
+  "results": [
+    {
+      "test_id": "A1_GeneralQuery",
+      "passed": false,
+      "duration": 153,
+      "response": null,
+      "error": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "timestamp": "2026-04-02T20:33:32.696Z"
+    },
+    {
+      "test_id": "A2_HinglishSupport",
+      "passed": true,
+      "duration": 40,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:32.737Z"
+    },
+    {
+      "test_id": "A3_TranslationBasic",
+      "passed": false,
+      "duration": 38,
+      "response": null,
+      "error": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "timestamp": "2026-04-02T20:33:32.776Z"
+    },
+    {
+      "test_id": "A4_TTSSimple",
+      "passed": true,
+      "duration": 38,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:32.814Z"
+    },
+    {
+      "test_id": "B1_NewsIntelligence",
+      "passed": true,
+      "duration": 40,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:32.854Z"
+    },
+    {
+      "test_id": "B2_WikipediaAccess",
+      "passed": false,
+      "duration": 38,
+      "response": null,
+      "error": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "timestamp": "2026-04-02T20:33:32.892Z"
+    },
+    {
+      "test_id": "B3_ArxivResearch",
+      "passed": true,
+      "duration": 41,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:32.933Z"
+    },
+    {
+      "test_id": "B4_TavilySearch",
+      "passed": true,
+      "duration": 42,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:32.976Z"
+    },
+    {
+      "test_id": "C1_TwitterSearch",
+      "passed": true,
+      "duration": 40,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:33.017Z"
+    },
+    {
+      "test_id": "C2_RedditSearch",
+      "passed": true,
+      "duration": 40,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:33.057Z"
+    },
+    {
+      "test_id": "C3_WhatsAppMessage",
+      "passed": false,
+      "duration": 41,
+      "response": null,
+      "error": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "I'm not sure how to help with that. Try asking about news, Twitter, podcasts, or general questions."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "timestamp": "2026-04-02T20:33:33.098Z"
+    },
+    {
+      "test_id": "C4_PodcastSummary",
+      "passed": true,
+      "duration": 38,
+      "response": {
+        "version": "1.0",
+        "sessionAttributes": {
+          "lastQuery": ""
+        },
+        "response": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": "Which podcast would you like me to summarize? You can say something like \"summarize the latest Dwarkesh podcast\" or \"tell me about the podcast with Terence Tao\"."
+          },
+          "shouldEndSession": false
+        }
+      },
+      "error": null,
+      "timestamp": "2026-04-02T20:33:33.136Z"
+    }
+  ],
+  "timestamp": "2026-04-02T20:33:33.138Z"
+}

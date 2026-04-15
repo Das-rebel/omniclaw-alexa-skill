@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "sessionAttributes": {
+    "lastQuery": ""
+  },
+  "response": {
+    "outputSpeech": {
+      "type": "PlainText",
+      "text": "Welcome to Personal Assistant! I can help you with news, Twitter searches, podcast summaries, and more. What would you like to know?"
+    },
+    "shouldEndSession": false
+  }
+}
