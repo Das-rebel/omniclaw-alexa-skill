@@ -187,7 +187,7 @@ npm test -- --grep "WikipediaIntent"
 
 ## Documentation
 
-- [Capabilities Architecture](docs/architecture.svg) - Visual overview of all capabilities
+- [Capabilities Architecture](docs/architecture.png) - Visual overview of all capabilities
 - [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md) - Detailed technical architecture
 - [Persona System](infrastructure/cloud-functions/deploy/shared/persona/)
 - [HALO Orchestration](infrastructure/cloud-functions/deploy/shared/halo/)
@@ -196,9 +196,7 @@ npm test -- --grep "WikipediaIntent"
 
 **Story Narrator Demo**: Ask Alexa to "tell me a story about a brave warrior and a wise dragon" to hear the persona-based multi-character narration in action.
 
-**Capabilities Overview**: [View Architecture SVG](https://github.com/Das-rebel/omniclaw-alexa-skill/blob/main/docs/architecture.svg)
-
-[![OmniClaw Capabilities](https://raw.githubusercontent.com/Das-rebel/omniclaw-alexa-skill/main/docs/architecture.svg)](https://github.com/Das-rebel/omniclaw-alexa-skill/blob/main/docs/architecture.svg)
+![OmniClaw Capabilities](docs/architecture.png)
 
 ---
 
