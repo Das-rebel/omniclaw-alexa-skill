@@ -54,13 +54,20 @@ def upload_bookmarks(bookmarks):
         "count": len(bookmarks),
         "bookmarks": bookmarks
     }, indent=2)
-    result = subprocess.run(
-        ["gcloud", "storage", "cp", "-", f"gs://{BUCKET}/{OUTPUT}",
-         "--content-type=application/json"],
-        input=payload, capture_output=True, text=True, timeout=60
-    )
-    if result.returncode != 0:
-        raise Exception(f"GCS upload failed: {result.stderr}")
+    import tempfile, os
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        f.write(payload)
+        tmp_path = f.name
+    try:
+        result = subprocess.run(
+            ["gcloud", "storage", "cp", tmp_path, f"gs://{BUCKET}/{OUTPUT}",
+             "--content-type=application/json"],
+            capture_output=True, text=True, timeout=60
+        )
+        if result.returncode != 0:
+            raise Exception(f"GCS upload failed: {result.stderr}")
+    finally:
+        os.unlink(tmp_path)
     log(f"Uploaded {len(bookmarks)} bookmarks to gs://{BUCKET}/{OUTPUT}")
 
 async def scrape_twitter(cookies):
