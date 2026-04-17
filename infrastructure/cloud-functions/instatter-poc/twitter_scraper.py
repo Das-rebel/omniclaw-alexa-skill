@@ -87,11 +87,19 @@ async def scrape_twitter(cookies):
         page = await context.new_page()
         await page.goto(
             "https://x.com/i/bookmarks",
-            wait_until="domcontentloaded", timeout=120000
+            wait_until="networkidle", timeout=120000
         )
 
-        # Wait for JS to render bookmarks
-        await page.wait_for_timeout(5000)
+        # Scroll to top first to trigger lazy loading
+        await page.evaluate("window.scrollTo(0, 0)")
+        await page.wait_for_timeout(3000)
+
+        # Dismiss any popups/modals
+        try:
+            await page.keyboard.press("Escape")
+            await page.wait_for_timeout(500)
+        except:
+            pass
 
         # Check if logged in
         if "/login" in page.url:

@@ -7,22 +7,17 @@
 
 set -e
 
-LOG_FILE="/opt/instatter/combined_scrape.log"
 INSTAGRAM_SCRAPER="/opt/instatter/scraper.py"
 TWITTER_SCRAPER="/opt/instatter/twitter_scraper.py"
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
-}
-
-log "=== Combined Scrape Started ==="
+echo "[$(date)] === Combined Scrape Started ==="
 
 # Instagram
-log "Instagram scrape..."
-python3 "$INSTAGRAM_SCRAPER" >> /opt/instatter/instagram.log 2>&1 && log "Instagram: OK" || log "Instagram: FAILED"
+echo "[$(date)] Instagram scrape..."
+python3 "$INSTAGRAM_SCRAPER" >> /opt/instatter/instagram.log 2>&1 && echo "[$(date)] Instagram: OK" || echo "[$(date)] Instagram: FAILED"
 
 # Twitter
-log "Twitter scrape..."
-python3 "$TWITTER_SCRAPER" >> /opt/instatter/twitter.log 2>&1 && log "Twitter: OK" || log "Twitter: FAILED"
+echo "[$(date)] Twitter scrape..."
+python3 "$TWITTER_SCRAPER" >> /opt/instatter/twitter.log 2>&1 && echo "[$(date)] Twitter: OK" || echo "[$(date)] Twitter: FAILED"
 
-log "=== Combined Scrape Done ==="
+echo "[$(date)] === Combined Scrape Done ==="
