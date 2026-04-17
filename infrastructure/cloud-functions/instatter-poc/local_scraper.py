@@ -68,13 +68,20 @@ def upload_to_gcs(posts):
         "posts": posts,
     }, indent=2)
     if USE_GCLOUD_CLI:
-        result = subprocess.run(
-            ["gcloud", "storage", "cp", "-", f"gs://{BUCKET_NAME}/{OUTPUT_FILE}",
-             "--content-type=application/json"],
-            input=payload, capture_output=True, text=True, timeout=60
-        )
-        if result.returncode != 0:
-            raise Exception(f"GCS upload failed: {result.stderr}")
+        import tempfile, os
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            f.write(payload)
+            tmp_path = f.name
+        try:
+            result = subprocess.run(
+                ["gcloud", "storage", "cp", tmp_path, f"gs://{BUCKET_NAME}/{OUTPUT_FILE}",
+                 "--content-type=application/json"],
+                capture_output=True, text=True, timeout=60
+            )
+            if result.returncode != 0:
+                raise Exception(f"GCS upload failed: {result.stderr}")
+        finally:
+            os.unlink(tmp_path)
     else:
         if not GCS_AVAILABLE:
             raise Exception("google-cloud-storage not installed")
