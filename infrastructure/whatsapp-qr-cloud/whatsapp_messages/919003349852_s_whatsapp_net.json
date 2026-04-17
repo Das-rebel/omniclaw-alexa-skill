@@ -1,0 +1,238 @@
+[
+  {
+    "id": "AC8E5CD45F202E013A44B120A84603CA",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287518000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC11188A9D0C66CC7AE7BC271566CAF4",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287519000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC48E4C8BD0791FB77EEE78629563CDB",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287519000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC7D0B8E1152B809B06DFFE83F4A311D",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287519000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC23FE55285F3953130583A323627AB0",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287526000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC41CE918400987DD84082207F78F28B",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776287527000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC49607063B866B9AA3D198D7A9546D8",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776290462000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "AC5B04D46D2B0C6912D425D4F7279CA9",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852@s.whatsapp.net",
+    "to": "919003349852:10@s.whatsapp.net",
+    "text": "",
+    "timestamp": 1776290475000,
+    "direction": "incoming",
+    "status": "received",
+    "isGroup": false,
+    "groupName": null
+  },
+  {
+    "id": "3EB0DFAE8AE9EA1501B6C0",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "Test from OmniClaw - please reply if you receive this",
+    "timestamp": 1776291926605,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB081A9ED53D012EA172B",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "Self-test: reply with hello",
+    "timestamp": 1776292524445,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB000FC9DEA917E465221",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "vault udupi food",
+    "timestamp": 1776344489467,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB03A2343DD1A752EC719",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "test vault search",
+    "timestamp": 1776344513716,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0A86830D1C1B51FD31E",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "vault test query",
+    "timestamp": 1776344522653,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB05B6BD1B6F0D67FAEB7",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "vault udupi",
+    "timestamp": 1776344536643,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0AB67D9A8BDA13AE659",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "hello test",
+    "timestamp": 1776344780399,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0697910FEF6EF16061B",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "vault udupi food test",
+    "timestamp": 1776344787283,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0DB3ABC14577A5FC66B",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "vault test from phone",
+    "timestamp": 1776344852249,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB02E8AA78FCFC5E7A82C",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "^Vault sofa cum bed",
+    "timestamp": 1776346580710,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0B094FAD49912EE77E5",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "^Vault sofa cum bed",
+    "timestamp": 1776347062790,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB01056E74B08D6E37F7F",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "^Vault sofa cum bed test",
+    "timestamp": 1776347234936,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0726222868F9DD91345",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "^Vault sofa cum bed",
+    "timestamp": 1776347556035,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB00CCC79757381D4FA38",
+    "jid": "919003349852@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "919003349852@s.whatsapp.net",
+    "text": "test",
+    "timestamp": 1776362708244,
+    "direction": "outgoing",
+    "status": "sent"
+  }
+]

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "3EB048EA0BD99C0C1FBDD4",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "OmniClaw WhatsApp Connected! ✓ Message sent via API",
+    "timestamp": 1776287530668,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0BC29205EBABFC553BB",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Test",
+    "timestamp": 1776289390931,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB017FB781D858AEC5D95",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "OmniClaw WhatsApp Test",
+    "timestamp": 1776289453368,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0C02009FC622EA339D0",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Local service connected! What would you like to search?",
+    "timestamp": 1776290048956,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0CB018CBAF2D1C9E03D",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Test from local service - is WhatsApp control center working?",
+    "timestamp": 1776290554034,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0E6A82EB1F6DB5D0D75",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Auto-reply is now enabled for all messages. Send me a command!",
+    "timestamp": 1776291665052,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB001B29893931D4EF332",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "ping",
+    "timestamp": 1776291734175,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0D59FA9685160D51976",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Reply if you receive this - OmniClaw WhatsApp test",
+    "timestamp": 1776291783541,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB08863DFB87810BB91CF",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Hi from OmniClaw test - reply with anything",
+    "timestamp": 1776291997363,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB01C3BEFE1E3CF5C2D7D",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "OmniClaw WhatsApp Control Center - Commands:\n\n• menu - Show this menu\n• status - Check connection\n• send <phone> <msg> - Send message\n• play <song> - Play on Spotify\n• search <query> - Search web\n• news - Latest news\n• help - More commands\n\nJust chat naturally and I will respond!",
+    "timestamp": 1776292036401,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0A1AC777E8F32B4B6D3",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Send me a command to test - try: menu",
+    "timestamp": 1776292144693,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0AD0595321948A73C9F",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Try sending me a message now - I have AI routing enabled!",
+    "timestamp": 1776292317815,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB06800685CC71A146656",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Please reply with just the word: test",
+    "timestamp": 1776292415191,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0DC3098A1AC1C75B54C",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Send a test message to me now",
+    "timestamp": 1776292515233,
+    "direction": "outgoing",
+    "status": "sent"
+  },
+  {
+    "id": "3EB0F7819CDE13529CDDBF",
+    "jid": "917977110915@s.whatsapp.net",
+    "from": "919003349852:10@s.whatsapp.net",
+    "to": "917977110915@s.whatsapp.net",
+    "text": "Send me a command like: play song name or search for news",
+    "timestamp": 1776292630539,
+    "direction": "outgoing",
+    "status": "sent"
+  }
+]

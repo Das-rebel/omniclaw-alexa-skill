@@ -1,0 +1,146 @@
+{
+  "nodes": [
+    {
+      "id": "twitter_ai_topic",
+      "name": "Artificial Intelligence",
+      "type": "topic",
+      "platform": "twitter",
+      "confidence": 0.9,
+      "mentions": 45,
+      "createdAt": "2026-04-09T21:13:49.937Z",
+      "updatedAt": "2026-04-09T21:13:49.937Z",
+      "accessCount": 0,
+      "lastAccessed": null
+    },
+    {
+      "id": "twitter_skill_python",
+      "name": "Python Programming",
+      "type": "skill",
+      "platform": "twitter",
+      "confidence": 0.85,
+      "mentions": 32,
+      "createdAt": "2026-04-09T21:13:49.938Z",
+      "updatedAt": "2026-04-09T21:13:49.938Z",
+      "accessCount": 0,
+      "lastAccessed": null
+    },
+    {
+      "id": "instagram_ai_visual",
+      "name": "AI Visual Art",
+      "type": "topic",
+      "platform": "instagram",
+      "confidence": 0.75,
+      "saves": 28,
+      "createdAt": "2026-04-09T21:13:49.938Z",
+      "updatedAt": "2026-04-09T21:13:49.938Z",
+      "accessCount": 0,
+      "lastAccessed": null
+    },
+    {
+      "id": "instagram_skill_design",
+      "name": "Graphic Design",
+      "type": "skill",
+      "platform": "instagram",
+      "confidence": 0.82,
+      "saves": 41,
+      "createdAt": "2026-04-09T21:13:49.938Z",
+      "updatedAt": "2026-04-09T21:13:49.938Z",
+      "accessCount": 0,
+      "lastAccessed": null
+    },
+    {
+      "id": "food_udupi_restaurant",
+      "name": "Udupi Restaurant in Mumbai",
+      "type": "place",
+      "caption": "Famous Udupi restaurant serving authentic South Indian food including masala dosa, idli, vada, and filter coffee. Located near CST station.",
+      "hashtags": ["udupi", "southindian", "mumbai", "food", "restaurant"],
+      "vlTags": ["vegetarian", "south indian cuisine", "dosa", "idli"],
+      "confidence": 0.95,
+      "createdAt": "2026-04-10T10:00:00.000Z",
+      "updatedAt": "2026-04-10T10:00:00.000Z",
+      "accessCount": 5,
+      "lastAccessed": null
+    },
+    {
+      "id": "food_masala_dosa",
+      "name": "Masala Dosa",
+      "type": "food",
+      "caption": "Crispy rice and lentil crepe filled with spiced potato masala, served with coconut chutney and sambar. A popular South Indian breakfast dish.",
+      "hashtags": ["masaladosa", "southindian", "breakfast", "vegetarian"],
+      "vlTags": ["crispy", "potato", "spiced", "crepe"],
+      "confidence": 0.92,
+      "createdAt": "2026-04-10T10:30:00.000Z",
+      "updatedAt": "2026-04-10T10:30:00.000Z",
+      "accessCount": 3,
+      "lastAccessed": null
+    },
+    {
+      "id": "food_udupi_cuisine",
+      "name": "Udupi Cuisine",
+      "type": "cuisine",
+      "caption": "Udupi cuisine originates from the Udupi region in Karnataka, India. Known for vegetarian dishes like dosa, idli, vada, and various rice-based preparations.",
+      "hashtags": ["udupi", "karnataka", "cuisine", "vegetarian", "southindian"],
+      "vlTags": ["vegetarian", "rice dishes", "coastal karnataka"],
+      "confidence": 0.88,
+      "createdAt": "2026-04-10T11:00:00.000Z",
+      "updatedAt": "2026-04-10T11:00:00.000Z",
+      "accessCount": 2,
+      "lastAccessed": null
+    }
+  ],
+  "relationships": [
+    {
+      "id": "twitter_ai_topic-twitter_skill_python",
+      "from": "twitter_ai_topic",
+      "to": "twitter_skill_python",
+      "type": "related_to",
+      "strength": 0.8,
+      "platform": "twitter",
+      "createdAt": "2026-04-09T21:13:49.938Z"
+    },
+    {
+      "id": "instagram_ai_visual-instagram_skill_design",
+      "from": "instagram_ai_visual",
+      "to": "instagram_skill_design",
+      "type": "incorporates",
+      "strength": 0.9,
+      "platform": "instagram",
+      "createdAt": "2026-04-09T21:13:49.938Z"
+    },
+    {
+      "id": "twitter_ai_topic-instagram_ai_visual",
+      "from": "twitter_ai_topic",
+      "to": "instagram_ai_visual",
+      "type": "cross_platform",
+      "strength": 0.7,
+      "discovered_via": "semantic_analysis",
+      "createdAt": "2026-04-09T21:13:49.938Z"
+    },
+    {
+      "id": "food_udupi_restaurant-food_masala_dosa",
+      "from": "food_udupi_restaurant",
+      "to": "food_masala_dosa",
+      "type": "serves",
+      "strength": 0.95,
+      "platform": "knowledge",
+      "createdAt": "2026-04-10T10:35:00.000Z"
+    },
+    {
+      "id": "food_udupi_cuisine-food_udupi_restaurant",
+      "from": "food_udupi_cuisine",
+      "to": "food_udupi_restaurant",
+      "type": "located_at",
+      "strength": 0.85,
+      "platform": "knowledge",
+      "createdAt": "2026-04-10T11:05:00.000Z"
+    }
+  ],
+  "clusters": [],
+  "metadata": {
+    "created": "2026-04-09T21:13:49.933Z",
+    "lastUpdated": "2026-04-10T11:05:00.000Z",
+    "totalNodes": 7,
+    "totalRelationships": 5,
+    "lastAccess": "2026-04-10T11:05:00.000Z"
+  }
+}

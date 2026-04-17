@@ -1,0 +1,15 @@
+{
+  "name": "spotify-callback-handler",
+  "version": "1.0.0",
+  "description": "Spotify OAuth callback handler for OmniClaw",
+  "main": "spotify-callback-handler.js",
+  "scripts": {
+    "start": "node spotify-callback-handler.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
