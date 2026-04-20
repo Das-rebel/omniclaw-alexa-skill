@@ -389,6 +389,224 @@ class VaultClient {
 
     return stats;
   }
+
+  /**
+   * Parse natural language mood and find vault posts matching that emotional state
+   */
+  getVaultByMood(moodQuery, limit = 10) {
+    const moodPatterns = {
+      'curious but lazy': ['thoughtful', 'intriguing', 'exploratory'],
+      'energetic': ['enthusiastic', 'excited', 'joyful'],
+      'contemplative': ['thoughtful', 'reverent', 'calm'],
+      'hungry': ['appetizing', 'enticing', 'delicious'],
+      'creative': ['creative', 'artistic', 'inspiring'],
+      'analytical': ['analytical', 'technical', 'detailed'],
+      'inspired': ['inspired', 'motivational', 'uplifting']
+    };
+    const targetMoods = moodPatterns[moodQuery.toLowerCase()] || [moodQuery];
+
+    const vault = this.loadVaultPosts();
+    const scored = vault
+      .map(post => ({
+        post,
+        moodScore: targetMoods.some(m =>
+          (post.vlMood || '').toLowerCase().includes(m.toLowerCase())
+        ) ? 1 : 0
+      }))
+      .filter(x => x.moodScore > 0)
+      .slice(0, limit);
+
+    return {
+      query: moodQuery,
+      matchedMoods: targetMoods,
+      posts: scored.map(x => x.post),
+      count: scored.length
+    };
+  }
+
+  /**
+   * Show what topics/interests are trending in the user's vault over time
+   */
+  getVaultTrends(timeRangeDays = 30) {
+    const vault = this.loadVaultPosts();
+
+    const tagCounts = {};
+    vault.forEach(post => {
+      (post.vlTags || []).forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+
+    const ranked = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20);
+
+    const topTags = ranked.map(([tag, count]) => ({ tag, count }));
+    const topTag = topTags[0];
+
+    return {
+      topTags,
+      topTag,
+      totalPosts: vault.length,
+      discovery: topTag
+        ? `You have ${topTag.count} posts about '${topTag.tag}' - you're clearly into that!`
+        : 'Not enough data for trends yet.',
+      timeRange: `${timeRangeDays} days`
+    };
+  }
+/**
+   * Find unexpected connections between two different interest areas in the vault
+   */
+  findCrossConnections(domain1, domain2) {
+    const vault = this.loadVaultPosts();
+
+    // Get posts for each domain
+    const domain1Posts = vault.filter(p =>
+      (p.vlSubject || '').toLowerCase().includes(domain1.toLowerCase()) ||
+      (p.vlTags || []).some(t => t.toLowerCase().includes(domain1.toLowerCase()))
+    );
+    const domain2Posts = vault.filter(p =>
+      (p.vlSubject || '').toLowerCase().includes(domain2.toLowerCase()) ||
+      (p.vlTags || []).some(t => t.toLowerCase().includes(domain2.toLowerCase()))
+    );
+
+    // Find shared vlTags
+    const tags1 = new Set(domain1Posts.flatMap(p => p.vlTags || []));
+    const tags2 = new Set(domain2Posts.flatMap(p => p.vlTags || []));
+    const sharedTags = [...tags1].filter(t => tags2.has(t));
+
+    // Find shared vlStyles
+    const styles1 = new Set(domain1Posts.map(p => p.vlStyle).filter(Boolean));
+    const styles2 = new Set(domain2Posts.map(p => p.vlStyle).filter(Boolean));
+    const sharedStyles = [...styles1].filter(s => styles2.has(s));
+
+    return {
+      domain1: { name: domain1, postCount: domain1Posts.length },
+      domain2: { name: domain2, postCount: domain2Posts.length },
+      sharedTags,
+      sharedStyles,
+      insight: sharedTags.length > 0
+        ? `Your ${domain1} and ${domain2} interests connect through: ${sharedTags.slice(0, 5).join(', ')}`
+        : sharedStyles.length > 0
+          ? `${domain1} and ${domain2} share aesthetic styles: ${sharedStyles.slice(0, 3).join(', ')}`
+          : `Your ${domain1} and ${domain2} interests connect through similar perspectives`
+    };
+  }
+
+  /**
+   * Turn a single bookmarked post into a structured learning path
+   */
+  getDeepDive(postId) {
+    const vault = this.loadVaultPosts();
+    const post = vault.find(p => p.id === postId || p.permalink?.includes(postId));
+    if (!post) return null;
+
+    // Find related posts by vlTags, vlSubject similarity
+    const related = vault
+      .filter(p => p.id !== post.id)
+      .map(p => ({
+        post: p,
+        relevance: this.calculateRelevance(post, p)
+      }))
+      .filter(x => x.relevance > 0.3)
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, 10);
+
+    // Get knowledge graph context
+    const kg = this.loadKnowledgeGraph();
+    const topicNodes = kg?.nodes?.filter(n =>
+      post.vlTags?.some(tag => n.name.toLowerCase().includes(tag.toLowerCase()))
+    );
+
+    return {
+      anchor: {
+        id: post.id,
+        vlSubject: post.vlSubject,
+        vlTags: post.vlTags,
+        caption: post.caption?.substring(0, 100),
+        url: post.permalink
+      },
+      learningPath: related.map(r => ({
+        post: r.post,
+        relevance: Math.round(r.relevance * 100) + '%',
+        whyRelevant: `Matches your interest in ${r.post.vlSubject}`
+      })),
+      knowledgeGraphConnections: topicNodes,
+      summary: `You bookmarked ${post.vlSubject}. Here are ${related.length} related posts and ${topicNodes?.length || 0} topics to explore.`
+    };
+  }
+
+  /**
+   * Calculate relevance score between two posts
+   */
+  calculateRelevance(post1, post2) {
+    const tagOverlap = (post1.vlTags || []).filter(t =>
+      (post2.vlTags || []).includes(t)
+    ).length;
+    const subjectMatch = post1.vlSubject === post2.vlSubject ? 1 : 0;
+    const styleMatch = post1.vlStyle === post2.vlStyle ? 0.5 : 0;
+    return (tagOverlap * 0.7) + (subjectMatch * 0.3) + styleMatch;
+  }
+
+  /**
+   * Find surprising connections based on hidden gems - posts with niche tags
+   */
+  getSerendipity(nicheThreshold = 5) {
+    const vault = this.loadVaultPosts();
+    const kg = this.loadKnowledgeGraph();
+
+    // Count tag frequencies
+    const tagCounts = {};
+    vault.forEach(p => (p.vlTags || []).forEach(t => {
+      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    }));
+
+    // Find niche tags (appearing <= threshold times)
+    const nicheTags = Object.entries(tagCounts)
+      .filter(([_, count]) => count <= nicheThreshold)
+      .map(([tag]) => tag);
+
+    // Find posts with these niche tags
+    const serendipityPosts = vault.filter(p =>
+      (p.vlTags || []).some(t => nicheTags.includes(t))
+    );
+
+    if (serendipityPosts.length === 0) {
+      return {
+        discovery: null,
+        message: 'Not enough niche content for serendipity right now.'
+      };
+    }
+
+    // Pick a random one
+    const pick = serendipityPosts[Math.floor(Math.random() * serendipityPosts.length)];
+    const nicheTag = (pick.vlTags || []).find(t => nicheTags.includes(t));
+    const tagCount = tagCounts[nicheTag] || 0;
+
+    // Find related knowledge graph nodes
+    const relatedKG = kg?.nodes?.filter(n =>
+      n.hashtags?.some(h => nicheTags.includes(h)) ||
+      (n.name && nicheTags.some(t => n.name.toLowerCase().includes(t.toLowerCase())))
+    );
+
+    return {
+      discovery: {
+        id: pick.id,
+        vlSubject: pick.vlSubject,
+        vlTags: pick.vlTags,
+        vlMood: pick.vlMood,
+        caption: pick.caption?.substring(0, 100),
+        url: pick.permalink
+      },
+      whyInteresting: `Only ${tagCount} people have saved posts about '${nicheTag}' - this is rare material!`,
+      relatedKnowledge: relatedKG?.slice(0, 3),
+      similarHiddenGems: serendipityPosts.slice(0, 5).map(p => ({
+        vlSubject: p.vlSubject,
+        vlTags: p.vlTags,
+        url: p.permalink
+      }))
+    };
+  }
 }
 
 module.exports = VaultClient;

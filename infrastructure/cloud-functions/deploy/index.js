@@ -1556,6 +1556,7 @@ exports.alexaHandler = async (req, res) => {
           const vault = new VaultClient();
           const { personaGenerator } = initializeOmniClaw2();
           const persona = personaGenerator.getCapabilityPersona('VaultIntent');
+          const vaultName = persona.name || 'Your Vault Assistant';
 
           if (!query) {
             // Return vault stats when no query
@@ -1563,7 +1564,7 @@ exports.alexaHandler = async (req, res) => {
             res.json({
               version: '1.0',
               response: {
-                outputSpeech: { type: 'PlainText', text: `${persona.name} here. Your vault contains ${stats.knowledgeGraph.totalNodes} items including ${stats.knowledgeGraph.topics} topics and ${stats.knowledgeGraph.skills} skills. What would you like to explore?` },
+                outputSpeech: { type: 'PlainText', text: `${vaultName} here. Your vault contains ${stats.knowledgeGraph.totalNodes} items including ${stats.knowledgeGraph.topics} topics and ${stats.knowledgeGraph.skills} skills. What would you like to explore?` },
                 shouldEndSession: false
               }
             });
@@ -1579,8 +1580,8 @@ exports.alexaHandler = async (req, res) => {
             if (topics.length >= 2) {
               const result = vault.connectTheDots(topics[0], topics[1]);
               const text = result.connected
-                ? `${persona.name} here. ${result.explanation || `${topics[0]} connects to ${topics[1]}`}`
-                : `${persona.name} here. I couldn't find a connection between ${topics[0]} and ${topics[1]} in your vault.`;
+                ? `${vaultName} here. ${result.explanation || `${topics[0]} connects to ${topics[1]}`}`
+                : `${vaultName} here. I couldn't find a connection between ${topics[0]} and ${topics[1]} in your vault.`;
               res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
               return;
             }
@@ -1590,8 +1591,8 @@ exports.alexaHandler = async (req, res) => {
             const cuisine = queryLower.replace(/food|restaurant|cuisine|recommend|me/gi, '').trim();
             const result = vault.getFoodRecommendations(cuisine || 'indian');
             const text = result.restaurants.length > 0
-              ? `${persona.name} here. Found ${result.restaurants.length} places serving ${cuisine || 'related'} cuisine.`
-              : `${persona.name} here. No food recommendations found for "${cuisine}" in your vault.`;
+              ? `${vaultName} here. Found ${result.restaurants.length} places serving ${cuisine || 'related'} cuisine.`
+              : `${vaultName} here. No food recommendations found for "${cuisine}" in your vault.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
           }
@@ -1600,8 +1601,8 @@ exports.alexaHandler = async (req, res) => {
             const skill = queryLower.replace(/skill|learn|learning|path|how do i/gi, '').trim();
             const result = vault.getSkillLearningPath(skill || 'python');
             const text = result
-              ? `${persona.name} here. Your ${result.skill?.name || skill} learning path includes ${result.relatedTopics?.length || 0} topics. Estimated time: ${result.estimatedLearnTime}.`
-              : `${persona.name} here. No learning path found for "${skill}" in your vault.`;
+              ? `${vaultName} here. Your ${result.skill?.name || skill} learning path includes ${result.relatedTopics?.length || 0} topics. Estimated time: ${result.estimatedLearnTime}.`
+              : `${vaultName} here. No learning path found for "${skill}" in your vault.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
           }
@@ -1609,10 +1610,65 @@ exports.alexaHandler = async (req, res) => {
           if (queryLower.includes('random') || queryLower.includes('insight')) {
             const result = vault.getRandomInsight();
             const text = result
-              ? `${persona.name} here. ${result.fact}`
-              : `${persona.name} here. No insights available from your vault yet.`;
+              ? `${vaultName} here. ${result.fact}`
+              : `${vaultName} here. No insights available from your vault yet.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
+          }
+
+          // Mood-based vault exploration
+          if (queryLower.includes('mood') || queryLower.includes('feeling') || queryLower.includes('something')) {
+            const moods = queryLower.replace(/mood|feeling|show me something|I'm |im |i am /gi, '').trim();
+            const result = vault.getVaultByMood(moods);
+            const text = result.count > 0
+              ? `${vaultName} here. Found ${result.count} posts with ${moods} vibe. Top match: ${result.posts[0]?.vlSubject || 'see results'}.`
+              : `${vaultName} here. No posts found matching "${moods}" mood.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Vault trends - what is user into?
+          if (queryLower.includes('trending') || queryLower.includes('what am i into') || queryLower.includes('vault trends')) {
+            const result = vault.getVaultTrends();
+            const top3 = result.topTags.slice(0, 3).map(t => `${t.tag}(${t.count})`).join(', ');
+            const text = `${vaultName} here. Your top interests: ${top3}. ${result.discovery}`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Cross-pollination - unexpected connections
+          if (queryLower.includes('cross connect') || queryLower.includes('cross-pollination') || queryLower.includes('unexpected connection')) {
+            const match = query.match(/connect\s+(.+?)\s+and\s+(.+?)(?:\s+|\?|$)/i) || query.match(/how do (.+?) and (.+?) connect/i);
+            if (match) {
+              const result = vault.findCrossConnections(match[1], match[2]);
+              const text = result.insight || `${vaultName} here. ${result.domain1.name} and ${result.domain2.name} share ${result.sharedTags.length} tags.`;
+              res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+              return;
+            }
+          }
+
+          // Serendipity - surprise me with hidden gems
+          if (queryLower.includes('serendipity') || queryLower.includes('surprise me') || queryLower.includes('hidden gem') || queryLower.includes('rare find')) {
+            const result = vault.getSerendipity(3);
+            const text = result.discovery
+              ? `${vaultName} here. ${result.whyInteresting} Check this out: ${result.discovery.vlSubject}.`
+              : `${vaultName} here. Not enough hidden gems right now.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Deep dive - learning path from bookmark
+          if (queryLower.includes('deep dive') || queryLower.includes('teach me') || queryLower.includes('learning path') || queryLower.includes('related posts')) {
+            // Extract topic from query
+            const topic = queryLower.replace(/deep dive|teach me|learning path|related posts|about/gi, '').trim();
+            if (topic) {
+              const result = vault.findKnowledge(topic);
+              if (result.topics.length > 0 || result.skills.length > 0) {
+                const text = `${vaultName} here. Found ${result.topics.length + result.skills.length} items about "${topic}". Say "more about ${topic}" to get a deep dive learning path.`;
+                res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+                return;
+              }
+            }
           }
 
           // Default: search knowledge
@@ -1620,7 +1676,7 @@ exports.alexaHandler = async (req, res) => {
           const total = result.topics.length + result.skills.length + result.places.length + result.food.length;
 
           if (total > 0) {
-            const text = `${persona.name} here. Found ${total} items in your vault matching "${query}". ${result.topics.length > 0 ? `${result.topics.length} topics, ` : ''}${result.skills.length > 0 ? `${result.skills.length} skills, ` : ''}${result.places.length > 0 ? `${result.places.length} places, ` : ''}${result.food.length > 0 ? `${result.food.length} food items` : ''}.`;
+            const text = `${vaultName} here. Found ${total} items in your vault matching "${query}". ${result.topics.length > 0 ? `${result.topics.length} topics, ` : ''}${result.skills.length > 0 ? `${result.skills.length} skills, ` : ''}${result.places.length > 0 ? `${result.places.length} places, ` : ''}${result.food.length > 0 ? `${result.food.length} food items` : ''}.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
           }
@@ -1629,7 +1685,7 @@ exports.alexaHandler = async (req, res) => {
           res.json({
             version: '1.0',
             response: {
-              outputSpeech: { type: 'PlainText', text: `${persona.name} here. I couldn't find anything matching "${query}" in your vault. Try searching for topics like AI, Python, or ask about food recommendations.` },
+              outputSpeech: { type: 'PlainText', text: `${vaultName} here. I couldn't find anything matching "${query}" in your vault. Try searching for topics like AI, Python, or ask about food recommendations.` },
               shouldEndSession: false
             }
           });

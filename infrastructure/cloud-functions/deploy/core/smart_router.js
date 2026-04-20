@@ -89,7 +89,11 @@ class SmartRouter {
         keywords: ['vault', 'my bookmarks', 'saved content', 'dig', 'knowledge graph',
                    'connect the dots', 'food recommendation', 'skill path', 'related knowledge',
                    'what do i know about', 'show me what i saved', 'my knowledge',
-                   'search vault', 'vault search', 'random insight', 'from my vault'],
+                   'search vault', 'vault search', 'random insight', 'from my vault',
+                   'mood', 'how am i feeling', 'trending', 'what am i into',
+                   'cross connect', 'cross-pollination', 'unexpected connection',
+                   'serendipity', 'surprise me', 'hidden gem', 'rare find',
+                   'deep dive', 'teach me', 'learning path', 'related posts'],
         intent: 'VaultIntent',
         description: 'explore your personal knowledge vault'
       }
