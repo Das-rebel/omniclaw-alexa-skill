@@ -607,6 +607,320 @@ class VaultClient {
       }))
     };
   }
+
+  /**
+   * Analyzes dimensions and mediaType to reconstruct your visual taste evolution over time.
+   * Your saved posts ARE an implicit visual diary.
+   */
+  getAestheticEvolution() {
+    const vault = this.loadVaultPosts();
+    const now = Date.now();
+
+    // Analyze dimension patterns over time
+    const dimensionTimeline = vault
+      .filter(p => p.dimensions && p.postDate)
+      .map(p => ({
+        date: new Date(p.postDate).getTime(),
+        width: p.dimensions.width,
+        height: p.dimensions.height,
+        aspectRatio: p.dimensions.width / p.dimensions.height,
+        isPortrait: p.dimensions.height > p.dimensions.width,
+        isLandscape: p.dimensions.width > p.dimensions.height,
+        isSquare: Math.abs(p.dimensions.width - p.dimensions.height) < 50,
+        mediaType: p.mediaType,
+        vlStyle: p.vlStyle,
+        vlMood: p.vlMood
+      }))
+      .sort((a, b) => a.date - b.date);
+
+    // Group by month
+    const monthlyPatterns = {};
+    dimensionTimeline.forEach(p => {
+      const monthKey = new Date(p.date).toISOString().substring(0, 7);
+      if (!monthlyPatterns[monthKey]) {
+        monthlyPatterns[monthKey] = { portrait: 0, landscape: 0, square: 0, carousel: 0, video: 0, image: 0, total: 0 };
+      }
+      monthlyPatterns[monthKey].total++;
+      if (p.isPortrait) monthlyPatterns[monthKey].portrait++;
+      if (p.isLandscape) monthlyPatterns[monthKey].landscape++;
+      if (p.isSquare) monthlyPatterns[monthKey].square++;
+      if (p.mediaType === 'carousel') monthlyPatterns[monthKey].carousel++;
+      if (p.mediaType === 'video') monthlyPatterns[monthKey].video++;
+      if (p.mediaType === 'image') monthlyPatterns[monthKey].image++;
+    });
+
+    // Find aesthetic shifts
+    const months = Object.entries(monthlyPatterns).sort();
+    const shifts = [];
+    for (let i = 1; i < months.length; i++) {
+      const prev = months[i - 1][1];
+      const curr = months[i][1];
+      const prevRatio = prev.landscape / prev.total;
+      const currRatio = curr.landscape / curr.total;
+      if (Math.abs(currRatio - prevRatio) > 0.3) { // 30% shift
+        shifts.push({
+          month: months[i][0],
+          shift: currRatio > prevRatio ? 'more landscape' : 'more portrait',
+          change: Math.round((currRatio - prevRatio) * 100)
+        });
+      }
+    }
+
+    // Current preferences
+    const recent = months.slice(-3);
+    const avgRecent = recent.reduce((acc, [, m]) => ({
+      portrait: acc.portrait + m.portrait / recent.length,
+      landscape: acc.landscape + m.landscape / recent.length,
+      square: acc.square + m.square / recent.length
+    }), { portrait: 0, landscape: 0, square: 0 });
+
+    const dominant = Object.entries(avgRecent).sort((a, b) => b[1] - a[1])[0];
+    const dominantLabel = dominant[0];
+
+    // Most common styles/moods in recent posts
+    const recentPosts = vault.filter(p => {
+      if (!p.postDate) return false;
+      const age = now - new Date(p.postDate).getTime();
+      return age < 90 * 24 * 60 * 60 * 1000; // Last 90 days
+    });
+    const recentStyles = recentPosts.map(p => p.vlStyle).filter(Boolean);
+    const recentMoods = recentPosts.map(p => p.vlMood).filter(Boolean);
+    const styleCounts = {};
+    const moodCounts = {};
+    recentStyles.forEach(s => { styleCounts[s] = (styleCounts[s] || 0) + 1; });
+    recentMoods.forEach(m => { moodCounts[m] = (moodCounts[m] || 0) + 1; });
+    const topStyle = Object.entries(styleCounts).sort((a, b) => b[1] - a[1])[0];
+    const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      currentPreference: `Your recent aesthetic: ${dominantLabel} (${Math.round(dominant[1]/recent.length)}%)`,
+      shifts: shifts.slice(0, 3),
+      insight: shifts.length > 0
+        ? `Your visual taste shifted ${shifts[0].shift} around ${shifts[0].month}!`
+        : topStyle
+          ? `Currently favoring ${topStyle[0]} style and ${topMood?.[0] || 'varied'} moods.`
+          : 'Not enough visual data for aesthetic analysis yet.',
+      aestheticSummary: {
+        dominantFormat: dominantLabel,
+        aestheticStyle: topStyle?.[0] || 'varied',
+        emotionalTone: topMood?.[0] || 'varied'
+      },
+      totalAnalyzed: dimensionTimeline.length
+    };
+  }
+
+  /**
+   * Trace the evolution of interests over time using postDate
+   * Shows when interests were born, how they grew, and seasonal patterns
+   */
+  getInterestArchaeology(timeRangeDays = 365) {
+    const vault = this.loadVaultPosts();
+    const now = Date.now();
+    const cutoff = now - (timeRangeDays * 24 * 60 * 60 * 1000);
+
+    // Build timeline for each vlTag
+    const tagTimeline = {};
+    vault.forEach(post => {
+      if (!post.postDate || new Date(post.postDate).getTime() < cutoff) return;
+      (post.vlTags || []).forEach(tag => {
+        if (!tagTimeline[tag]) tagTimeline[tag] = { firstSeen: post.postDate, count: 0, posts: [] };
+        tagTimeline[tag].count++;
+        tagTimeline[tag].posts.push({ id: post.id, date: post.postDate });
+        if (new Date(post.postDate).getTime() < new Date(tagTimeline[tag].firstSeen).getTime()) {
+          tagTimeline[tag].firstSeen = post.postDate;
+        }
+      });
+    });
+
+    // Find oldest interests
+    const sorted = Object.entries(tagTimeline)
+      .map(([tag, data]) => ({ tag, firstSeen: data.firstSeen, count: data.count, age: Math.floor((now - new Date(data.firstSeen).getTime()) / (1000 * 60 * 60 * 24)) }))
+      .filter(t => t.age > 30) // At least 30 days old
+      .sort((a, b) => a.age - b.age);
+
+    const oldest = sorted.slice(0, 5);
+    const longest = oldest.length > 0 ? oldest[0] : null;
+
+    // Detect seasonal patterns (month-of-year distribution)
+    const monthlyCounts = {};
+    vault.forEach(post => {
+      if (post.postDate) {
+        const month = new Date(post.postDate).getMonth();
+        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+      }
+    });
+    const peakMonth = Object.entries(monthlyCounts).sort((a, b) => b[1] - a[1])[0];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    return {
+      oldestInterests: oldest.map(t => ({ tag: t.tag, since: t.firstSeen.substring(0, 10), age: t.age + ' days', posts: t.count })),
+      insight: longest
+        ? `You've been interested in "${longest.tag}" for ${longest.age} days - your longest running interest!`
+        : 'Not enough historical data yet.',
+      peakMonth: peakMonth ? `${monthNames[parseInt(peakMonth[0])]} had the most saves (${peakMonth[1]})` : null,
+      totalTracked: Object.keys(tagTimeline).length
+    };
+  }
+
+  /**
+   * Find "quietly powerful" posts - content that hit harder than its save count suggests
+   * Uses save ratios relative to post age, not raw counts
+   */
+  getResonanceScore(minSaves = 1) {
+    const vault = this.loadVaultPosts();
+    const now = Date.now();
+
+    // Calculate resonance for each post
+    const scored = vault
+      .filter(p => (p.saves || 0) >= minSaves)
+      .map(post => {
+        const age = post.postDate
+          ? Math.floor((now - new Date(post.postDate).getTime()) / (1000 * 60 * 60 * 24))
+          : 365;
+        const expectedSaves = Math.max(1, age / 30); // Expected saves per month
+        const actualSaves = post.saves || 1;
+        const resonanceRatio = actualSaves / expectedSaves;
+        const engagement = (post.saves || 0) + (post.comments || 0) * 2;
+
+        return {
+          post,
+          age,
+          resonanceRatio: Math.round(resonanceRatio * 100) / 100,
+          engagement
+        };
+      })
+      .filter(x => x.resonanceRatio > 2) // Posts that outperformed by 2x
+      .sort((a, b) => b.resonanceRatio - a.resonanceRatio);
+
+    const topPosts = scored.slice(0, 5);
+    const top = topPosts[0];
+
+    return {
+      topResonators: topPosts.map((x, i) => ({
+        rank: i + 1,
+        subject: x.post.vlSubject,
+        resonanceRatio: x.resonanceRatio + 'x',
+        saves: x.post.saves,
+        age: x.age + ' days',
+        caption: x.post.caption?.substring(0, 80) + '...'
+      })),
+      insight: top
+        ? `"${top.post.vlSubject}" hit ${top.resonanceRatio}x harder than expected for its age - quietly powerful!`
+        : 'Not enough engagement data for resonance analysis.',
+      totalAnalyzed: vault.length
+    };
+  }
+
+  /**
+   * Find pairs of interests that share audiences but have no knowledge graph connection
+   */
+  getBlindSpot() {
+    const vault = this.loadVaultPosts();
+
+    // Get unique subjects from vault
+    const subjects = [...new Set(vault.map(p => p.vlSubject).filter(Boolean))];
+
+    // Find pairs that share 3+ tags
+    const pairs = [];
+    for (let i = 0; i < subjects.length; i++) {
+      for (let j = i + 1; j < subjects.length; j++) {
+        const s1 = subjects[i];
+        const s2 = subjects[j];
+        if (s1 === s2) continue;
+
+        const posts1 = vault.filter(p => p.vlSubject === s1);
+        const posts2 = vault.filter(p => p.vlSubject === s2);
+
+        const tags1 = new Set(posts1.flatMap(p => p.vlTags || []));
+        const tags2 = new Set(posts2.flatMap(p => p.vlTags || []));
+        const shared = [...tags1].filter(t => tags2.has(t));
+
+        if (shared.length >= 3) {
+          pairs.push({ topic1: s1, topic2: s2, shared, strength: shared.length });
+        }
+      }
+    }
+
+    // Dedupe similar subjects
+    const filtered = pairs.filter(p => {
+      const s1 = p.topic1.toLowerCase();
+      const s2 = p.topic2.toLowerCase();
+      if (s1 === s2) return false;
+      if (s1.includes(s2) || s2.includes(s1)) return false;
+      if (s1.split(' ').length === 1 && s2.split(' ').length === 1 && levenshtein(s1, s2) <= 3) return false;
+      return true;
+    }).slice(0, 5);
+
+    const top = filtered[0];
+
+    return {
+      missingConnections: filtered.map(p => ({
+        connection: p.topic1 + ' <-> ' + p.topic2,
+        via: p.shared.slice(0, 3).join(', '),
+        tagCount: p.strength
+      })),
+      insight: top
+        ? '"' + top.topic1 + '" and "' + top.topic2 + '" both appear in your vault with ' + top.strength + ' shared tags but are not connected!'
+        : 'Your interests are well-connected!',
+      totalMissing: filtered.length
+    };
+  }
+
+  /**
+   * Analyze caption text for topics you mention often but never saved
+   */
+  getGhostTopics() {
+    const vault = this.loadVaultPosts();
+
+    // Count hashtags that appear in captions but NOT in vlTags
+    const allCaptionHashtags = vault.flatMap(p => (p.hashtags || []).map(h => h.toLowerCase()));
+    const allVlTags = new Set(vault.flatMap(p => (p.vlTags || []).map(t => t.toLowerCase())));
+    const orphanedHashtags = allCaptionHashtags.filter(h => !allVlTags.has(h));
+    const hashtagCounts = {};
+    orphanedHashtags.forEach(h => { hashtagCounts[h] = (hashtagCounts[h] || 0) + 1; });
+    const orphanedSorted = Object.entries(hashtagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+    // Extract words from captions that don't exist in vlTags
+    const captionWords = vault.flatMap(p => {
+      const words = (p.caption || '').toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+      return words.filter(w => !allVlTags.has(w) && !hashtagCounts[w]);
+    });
+    const wordCounts = {};
+    captionWords.forEach(c => { wordCounts[c] = (wordCounts[c] || 0) + 1; });
+    const ghostWords = Object.entries(wordCounts).filter(([c, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const topWord = ghostWords[0];
+    const topHashtag = orphanedSorted[0];
+
+    return {
+      ghostConcepts: ghostWords.map(([concept, count]) => ({ concept, mentions: count })),
+      orphanedHashtags: orphanedSorted.map(([tag, count]) => ({ tag, count })),
+      insight: topWord
+        ? `You mention "${topWord[0]}" ${topWord[1]} times in captions but never saved a post about it!`
+        : topHashtag
+          ? `You use #${topHashtag[0]} in captions ${topHashtag[1]} times but never saved related content!`
+          : 'No ghost topics detected - you save what matters to you.',
+      totalGhosts: ghostWords.length + orphanedSorted.length
+    };
+  }
+}
+
+function levenshtein(a, b) {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+      }
+    }
+  }
+  return matrix[b.length][a.length];
 }
 
 module.exports = VaultClient;

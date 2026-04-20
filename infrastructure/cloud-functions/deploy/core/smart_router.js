@@ -93,7 +93,12 @@ class SmartRouter {
                    'mood', 'how am i feeling', 'trending', 'what am i into',
                    'cross connect', 'cross-pollination', 'unexpected connection',
                    'serendipity', 'surprise me', 'hidden gem', 'rare find',
-                   'deep dive', 'teach me', 'learning path', 'related posts'],
+                   'deep dive', 'teach me', 'learning path', 'related posts',
+                   'interest archaeology', 'how long have i been', 'oldest interest',
+                   'resonance', 'quietly powerful', 'hit different',
+                   'blind spot', 'missing connection', 'undiscovered',
+                   'ghost topics', 'on my mind', 'keep thinking about',
+                   'aesthetic', 'visual evolution', 'my taste', 'photo preference'],
         intent: 'VaultIntent',
         description: 'explore your personal knowledge vault'
       }

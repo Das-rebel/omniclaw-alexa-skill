@@ -1671,6 +1671,55 @@ exports.alexaHandler = async (req, res) => {
             }
           }
 
+          // Interest archaeology - how long have you been into X?
+          if (queryLower.includes('interest archaeology') || queryLower.includes('how long') || queryLower.includes('oldest interest') || queryLower.includes('been thinking about')) {
+            const result = vault.getInterestArchaeology();
+            const text = result.insight || `${vaultName} here. ${result.totalTracked} interests tracked over time.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Resonance - quietly powerful posts
+          if (queryLower.includes('resonance') || queryLower.includes('quietly powerful') || queryLower.includes('hit different')) {
+            const result = vault.getResonanceScore();
+            const top = result.topResonators?.[0];
+            const text = top
+              ? `${vaultName} here. Your top post: "${top.subject}" hit ${top.resonanceRatio} harder than expected!`
+              : `${vaultName} here. ${result.insight}`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Blind spot - missing connections
+          if (queryLower.includes('blind spot') || queryLower.includes('missing connection') || queryLower.includes('undiscovered')) {
+            const result = vault.getBlindSpot();
+            const top = result.missingConnections?.[0];
+            const text = top
+              ? `${vaultName} here. ${result.insight} Check: ${top.connection} via ${top.via}.`
+              : `${vaultName} here. ${result.insight}`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Ghost topics - on your mind but not saved
+          if (queryLower.includes('ghost topics') || queryLower.includes('on my mind') || queryLower.includes('keep thinking')) {
+            const result = vault.getGhostTopics();
+            const top = result.ghostConcepts?.[0];
+            const text = top
+              ? `${vaultName} here. ${result.insight} You mention "${top.concept}" ${top.mentions} times but never saved it!`
+              : `${vaultName} here. ${result.insight}`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Aesthetic evolution - your visual taste
+          if (queryLower.includes('aesthetic') || queryLower.includes('visual evolution') || queryLower.includes('my taste') || queryLower.includes('photo preference')) {
+            const result = vault.getAestheticEvolution();
+            const text = `${vaultName} here. ${result.currentPreference}. ${result.insight}`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
           // Default: search knowledge
           const result = vault.findKnowledge(query);
           const total = result.topics.length + result.skills.length + result.places.length + result.food.length;
