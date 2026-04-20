@@ -1546,6 +1546,107 @@ exports.alexaHandler = async (req, res) => {
         }
       }
 
+      // VaultIntent - Search personal knowledge vault
+      if (intentName === 'VaultIntent') {
+        const query = slots.Query?.value || slots.Topic?.value || '';
+        const action = slots.Action?.value || '';
+
+        try {
+          const VaultClient = require('./clients/vault_client');
+          const vault = new VaultClient();
+          const { personaGenerator } = initializeOmniClaw2();
+          const persona = personaGenerator.getCapabilityPersona('VaultIntent');
+
+          if (!query) {
+            // Return vault stats when no query
+            const stats = vault.getStats();
+            res.json({
+              version: '1.0',
+              response: {
+                outputSpeech: { type: 'PlainText', text: `${persona.name} here. Your vault contains ${stats.knowledgeGraph.totalNodes} items including ${stats.knowledgeGraph.topics} topics and ${stats.knowledgeGraph.skills} skills. What would you like to explore?` },
+                shouldEndSession: false
+              }
+            });
+            return;
+          }
+
+          // Route to appropriate vault function based on query
+          const queryLower = query.toLowerCase();
+
+          if (queryLower.includes('connect the dots') || queryLower.includes('relate')) {
+            // Extract two topics from query
+            const topics = queryLower.replace(/connect the dots|relate|how are|related/gi, '').trim().split(/\s+and\s+|\s+to\s+/);
+            if (topics.length >= 2) {
+              const result = vault.connectTheDots(topics[0], topics[1]);
+              const text = result.connected
+                ? `${persona.name} here. ${result.explanation || `${topics[0]} connects to ${topics[1]}`}`
+                : `${persona.name} here. I couldn't find a connection between ${topics[0]} and ${topics[1]} in your vault.`;
+              res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+              return;
+            }
+          }
+
+          if (queryLower.includes('food') || queryLower.includes('restaurant') || queryLower.includes('cuisine')) {
+            const cuisine = queryLower.replace(/food|restaurant|cuisine|recommend|me/gi, '').trim();
+            const result = vault.getFoodRecommendations(cuisine || 'indian');
+            const text = result.restaurants.length > 0
+              ? `${persona.name} here. Found ${result.restaurants.length} places serving ${cuisine || 'related'} cuisine.`
+              : `${persona.name} here. No food recommendations found for "${cuisine}" in your vault.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          if (queryLower.includes('skill') || queryLower.includes('learn')) {
+            const skill = queryLower.replace(/skill|learn|learning|path|how do i/gi, '').trim();
+            const result = vault.getSkillLearningPath(skill || 'python');
+            const text = result
+              ? `${persona.name} here. Your ${result.skill?.name || skill} learning path includes ${result.relatedTopics?.length || 0} topics. Estimated time: ${result.estimatedLearnTime}.`
+              : `${persona.name} here. No learning path found for "${skill}" in your vault.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          if (queryLower.includes('random') || queryLower.includes('insight')) {
+            const result = vault.getRandomInsight();
+            const text = result
+              ? `${persona.name} here. ${result.fact}`
+              : `${persona.name} here. No insights available from your vault yet.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // Default: search knowledge
+          const result = vault.findKnowledge(query);
+          const total = result.topics.length + result.skills.length + result.places.length + result.food.length;
+
+          if (total > 0) {
+            const text = `${persona.name} here. Found ${total} items in your vault matching "${query}". ${result.topics.length > 0 ? `${result.topics.length} topics, ` : ''}${result.skills.length > 0 ? `${result.skills.length} skills, ` : ''}${result.places.length > 0 ? `${result.places.length} places, ` : ''}${result.food.length > 0 ? `${result.food.length} food items` : ''}.`;
+            res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
+            return;
+          }
+
+          // No results
+          res.json({
+            version: '1.0',
+            response: {
+              outputSpeech: { type: 'PlainText', text: `${persona.name} here. I couldn't find anything matching "${query}" in your vault. Try searching for topics like AI, Python, or ask about food recommendations.` },
+              shouldEndSession: false
+            }
+          });
+          return;
+        } catch (e) {
+          console.error('VaultIntent error:', e.message);
+          res.json({
+            version: '1.0',
+            response: {
+              outputSpeech: { type: 'PlainText', text: 'I had trouble searching your vault. Please try again.' },
+              shouldEndSession: false
+            }
+          });
+          return;
+        }
+      }
+
       // KodiIntent - Control Kodi/XBMC media center
       if (intentName === 'KodiIntent' || intentName === 'KodiPlayIntent' || intentName === 'KodiControlIntent' || intentName === 'KodiNavigateIntent') {
         let action = (slots.Action?.value || slots.Command?.value || '').toLowerCase();

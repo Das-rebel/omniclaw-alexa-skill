@@ -83,6 +83,15 @@ class SmartRouter {
         keywords: ['arxiv', 'paper', 'research', 'academic'],
         intent: 'ArxivIntent',
         description: 'search academic papers'
+      },
+      {
+        name: 'vault',
+        keywords: ['vault', 'my bookmarks', 'saved content', 'dig', 'knowledge graph',
+                   'connect the dots', 'food recommendation', 'skill path', 'related knowledge',
+                   'what do i know about', 'show me what i saved', 'my knowledge',
+                   'search vault', 'vault search', 'random insight', 'from my vault'],
+        intent: 'VaultIntent',
+        description: 'explore your personal knowledge vault'
       }
     ];
   }
@@ -114,6 +123,14 @@ class SmartRouter {
     const matches = this._findCapabilityMatches(query);
 
     if (matches.length > 0) {
+      // Sort by confidence, tie-break with vault preference
+      matches.sort((a, b) => {
+        if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+        // Vault wins ties
+        if (a.name === 'vault') return -1;
+        if (b.name === 'vault') return 1;
+        return 0;
+      });
       const bestMatch = matches[0];
       console.log(`[SmartRouter] → ${bestMatch.name} intent (confidence: ${bestMatch.confidence})`);
 
@@ -193,7 +210,17 @@ class SmartRouter {
 
       if (matchCount > 0) {
         // Calculate confidence based on keyword match specificity
-        const confidence = Math.min(0.9, 0.5 + (matchCount * 0.1));
+        // Give extra weight to "vault" keyword as it's a strong indicator
+        let confidence = Math.min(0.9, 0.5 + (matchCount * 0.1));
+        if (matchedKeywords.some(k => k.toLowerCase() === 'vault')) {
+          confidence = Math.max(confidence, 0.7); // Vault mention is strong signal
+        }
+
+        // Boost if query explicitly asks for vault search
+        if (queryLower.includes('vault') && queryLower.includes('search')) {
+          confidence = Math.max(confidence, 0.75);
+        }
+
         matches.push({
           ...cap,
           confidence,

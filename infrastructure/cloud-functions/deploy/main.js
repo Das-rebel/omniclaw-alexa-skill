@@ -201,6 +201,10 @@ exports.syncHandler = (req, res) => {
   app(req, res);
 };
 
+// Export Express app for Cloud Functions Gen 2
+// Named exports for individual handlers + default export for HTTP trigger
+Object.assign(module.exports, { app });
+
 // Start HTTP server on PORT=8080 for Cloud Run health checks
 // This is required because Cloud Run containers must listen on the PORT env var
 const PORT = process.env.PORT || 8080;
