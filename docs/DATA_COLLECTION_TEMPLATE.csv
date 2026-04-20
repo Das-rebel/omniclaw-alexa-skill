@@ -1,0 +1,73 @@
+SESSION_ID,PARTICIPANT_ID,GROUP,DATE,TIME,MODERATOR,PLATFORM,
+,,"(A-Current / B-New)",,,,"(Alexa/WhatsApp/Web)"
+
+,=== METRICS TRACKING ===,,,
+,Scenario,Task,Success,Y/N,Time_Seconds,Turns,Errors,Notes
+,1,First-Time Interaction,Y/N,,,,,,,,,
+,2.1,Find Action Movie,Y/N,,,,,,,,,
+,2.2,Get Weather,Y/N,,,,,,,,,
+,2.3,Get Director Info,Y/N,,,,,,,,,
+,3,Error Recovery,Y/N,,,,,,,,,
+,4,Feature Discovery,N/A,,,,,,,,,
+,5A,Alexa Scenario,Y/N,,,,,,,,,
+,5B,WhatsApp Scenario,Y/N,,,,,,,,,
+,5C,Web Scenario,Y/N,,,,,,,,
+
+,=== PLATFORM PREFERENCES ===,,,
+,Platform,Time_to_First_Action,Completion_Rate,Satisfaction_1to5,Preferred_Y/N
+,Alexa,,,,,,,,,
+,WhatsApp,,,,,,,,,
+,Web,,,,,,,,,
+
+,=== FEATURE DISCOVERY ===,,,
+,Capability,Discovered_Y/N,Discovery_Method,Notes
+,Wikipedia Search,,,,"(exploration/accident/suggested)"
+,News,,,,
+,Translation,,,,
+,Stories,,,,
+,Arxiv Research,,,,
+,YouTube,,,,
+,Spotify,,,,
+,Kodi,,,,
+,Vault Search,,,,
+,General Queries,,,,
+
+,=== SATISFACTION SURVEY (SUS) ===,,,
+,Question,Response_1to5,Reverse_Scored_Y/N
+,1. Use frequently,,,No
+,2. Unnecessarily complex,,,Yes
+,3. Easy to use,,,No
+,4. Need to learn a lot,,,Yes
+,5. Responses clear,,,No
+,6. Figure out without help,,,No
+,7. Capabilities obvious,,,No
+,8. Felt frustrated,,,Yes
+,9. Felt confident,,,No
+,10. Needed to experiment,,,Yes
+,SUS_SCORE,"=SUM(adjusted_scores)*2.5",,
+
+,=== CUSTOM QUESTIONS ===,,,
+,Question,Response_1to5
+,11. Understood me,,
+,12. Responses relevant,,
+,13. Knew what to ask,,
+,14. Faster than expected,,
+,15. Felt helpful,,
+
+,=== QUALITATIVE FEEDBACK ===,,,
+,Question,Response
+,Most Frustrting,,
+,Most Delightful,,
+,Improvement Suggestion,,
+,Would Use Regularly Y/N,,
+,Would Recommend Y/N,,
+,Additional Feedback,,
+
+,=== MODERATOR OBSERVATIONS ===,,,
+,Metric,Value
+,Participant Confidence,,"(1-5)"
+,Emotional Response,,"(positive/neutral/negative/mixed)"
+,Technical Issues,,"(Y/N - describe)"
+,Surprise Moments,,
+,Body Language,,"(engaged/frustrated/confused/relaxed)"
+,Overall Impression,,

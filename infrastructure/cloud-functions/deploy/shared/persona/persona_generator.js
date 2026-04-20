@@ -409,6 +409,25 @@ class PersonaGenerator extends EventEmitter {
   }
 
   /**
+   * Get persona for a specific capability/intent
+   * Maps capabilities to appropriate persona templates
+   */
+  getCapabilityPersona(capability) {
+    const capabilityMap = {
+      'TranslateIntent': { ...this.personaTemplates.professional, expertise_domains: ['linguistics', 'translation', 'multilingual'], personality_traits: ['precise', 'culturally_sensitive', 'helpful'] },
+      'WikipediaIntent': { ...this.personaTemplates.professional, expertise_domains: ['general_knowledge', 'facts', 'reference'], personality_traits: ['knowledgeable', 'neutral', 'informative'] },
+      'NewsIntent': { ...this.personaTemplates.professional, expertise_domains: ['news', 'current_events', 'journalism'], personality_traits: ['up_to_date', 'balanced', 'concise'] },
+      'GenerateStoryIntent': { ...this.personaTemplates.creative, expertise_domains: ['storytelling', 'creative_writing', 'narrative'], personality_traits: ['imaginative', 'expressive', 'engaging'] },
+      'ArxivIntent': { ...this.personaTemplates.technical, expertise_domains: ['research', 'science', 'academia'], personality_traits: ['analytical', 'precise', 'thorough'] },
+      'SpotifyIntent': { ...this.personaTemplates.friendly, expertise_domains: ['music', 'entertainment', 'audio'], personality_traits: ['enthusiastic', 'casual', 'fun'] },
+      'KodiIntent': { ...this.personaTemplates.technical, expertise_domains: ['media', 'home_theater', 'entertainment'], personality_traits: ['helpful', 'technical', 'efficient'] },
+      'WhatsAppIntent': { ...this.personaTemplates.professional, expertise_domains: ['messaging', 'communication'], personality_traits: ['reliable', 'discreet', 'prompt'] }
+    };
+
+    return capabilityMap[capability] || this.getDefaultPersona();
+  }
+
+  /**
    * Get default persona
    */
   getDefaultPersona() {

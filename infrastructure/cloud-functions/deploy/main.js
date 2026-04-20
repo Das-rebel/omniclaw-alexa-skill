@@ -7,7 +7,7 @@
  */
 
 const express = require('express');
-const { healthHandler, alexaHandler, syncHandler } = require('./index');
+const { healthHandler, alexaHandler, syncHandler, omniclaw2Handler, omniclaw2GreetingHandler, omniclaw2DiscoveryHandler } = require('./index');
 
 const app = express();
 
@@ -101,6 +101,29 @@ app.post('/scrape/instagram', async (req, res) => {
       error: error.message
     });
   }
+});
+
+// ============================================
+// OmniClaw 2.0 Simplified Interface Routes
+// Jony Ive-inspired UI/UX with all 19 capabilities
+// ============================================
+
+// OmniClaw 2.0 main query endpoint
+// POST /api/omniclaw2 - Natural language query processing
+app.post('/api/omniclaw2', (req, res) => {
+  omniclaw2Handler(req, res);
+});
+
+// OmniClaw 2.0 contextual greeting
+// GET /api/omniclaw2/greeting?platform=alexa
+app.get('/api/omniclaw2/greeting', (req, res) => {
+  omniclaw2GreetingHandler(req, res);
+});
+
+// OmniClaw 2.0 capability discovery
+// GET /api/omniclaw2/discovery?platform=alexa
+app.get('/api/omniclaw2/discovery', (req, res) => {
+  omniclaw2DiscoveryHandler(req, res);
 });
 
 // WhatsApp proxy routes — forward to standalone whatsapp-qr-cloud service

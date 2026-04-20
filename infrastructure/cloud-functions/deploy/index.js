@@ -11,6 +11,7 @@ const PersonaGenerator = require('./shared/persona/persona_generator');
 const { ConversationMemory } = require('./shared/memory/conversation-memory');
 const { AttentionWeightedMemory } = require('./shared/memory/attention-weighted-memory');
 const { TaskGuidedCompressor } = require('./shared/memory/task-guided-compressor');
+const OmniClawIntegration = require('./integration/omniclaw_integration');
 const KodiClient = require('./clients/kodi_client');
 const AutoBookmarkSync = require('./clients/auto_bookmark_sync');
 
@@ -120,6 +121,7 @@ let storyOrchestrator = null;
 let conversationMemory = null;
 let attentionWeightedMemory = null;
 let taskGuidedCompressor = null;
+let omniClawIntegration = null;
 
 function initializeOmniClaw2() {
   if (!agentOrchestrator) {
@@ -130,9 +132,10 @@ function initializeOmniClaw2() {
     conversationMemory = new ConversationMemory();
     attentionWeightedMemory = new AttentionWeightedMemory();
     taskGuidedCompressor = new TaskGuidedCompressor(attentionWeightedMemory);
+    omniClawIntegration = new OmniClawIntegration();
     console.log('✅ OmniClaw 2.0 components ready');
   }
-  return { agentOrchestrator, serviceMesh, personaGenerator, conversationMemory, attentionWeightedMemory, taskGuidedCompressor };
+  return { agentOrchestrator, serviceMesh, personaGenerator, conversationMemory, attentionWeightedMemory, taskGuidedCompressor, omniClawIntegration };
 }
 
 function getStoryOrchestrator() {
@@ -171,6 +174,143 @@ function getTimeOfDayGreeting() {
 }
 
 /**
+ * Brief-first response helper - Ive-style: truncate to max words, offer to continue
+ * @param {string} text - Full response text
+ * @param {number} maxWords - Maximum words before truncation (default: 25)
+ * @param {string} offerText - Text to append offering continuation
+ * @returns {string} Brief response with continuation offer
+ */
+function briefResponse(text, maxWords = 25, offerText = 'Want more?') {
+  if (!text) return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  const brief = words.slice(0, maxWords).join(' ') + '...';
+  return `${brief} ${offerText}`;
+}
+
+/**
+ * Build continuity-aware session attributes for cross-platform context
+ * @param {Object} attrs - Existing session attributes
+ * @param {string} topic - Current conversation topic
+ * @param {Object} options - Additional continuity options
+ * @returns {Object} Enhanced session attributes
+ */
+function buildSessionAttributes(attrs = {}, topic = '', options = {}) {
+  return {
+    ...attrs,
+    threadId: attrs.threadId || generateThreadId(),
+    topic: topic || attrs.topic || '',
+    channel: 'alexa',
+    lastTopic: topic,
+    handoffAvailable: true,
+    ...options
+  };
+}
+
+/**
+ * Generate a simple thread ID for conversation continuity
+ * @returns {string} Thread ID
+ */
+function generateThreadId() {
+  return `thd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Check if topic is continuing from previous context
+ * @param {Object} session - Session attributes
+ * @param {string} newTopic - New topic from user
+ * @returns {boolean} True if continuing same topic
+ */
+function isContinuingTopic(session, newTopic) {
+  if (!session?.topic || !newTopic) return false;
+  const prevTopic = session.topic.toLowerCase();
+  const currTopic = newTopic.toLowerCase();
+  // Check if topics share significant words
+  const prevWords = new Set(prevTopic.split(/\s+/));
+  const currWords = new Set(currTopic.split(/\s+/));
+  const overlap = [...prevWords].filter(w => w.length > 3 && currWords.has(w));
+  return overlap.length >= 1;
+}
+
+/**
+ * Build a handoff card for cross-platform continuity
+ * @param {string} topic - Current topic
+ * @param {string} channel - Target channel
+ * @returns {string} Handoff message
+ */
+function buildHandoffCard(topic, channel = 'WhatsApp') {
+  return `Still on ${topic}. Continue on ${channel}? Say "continue on ${channel.toLowerCase()}" or I'll text you the details.`;
+}
+
+/**
+ * Intent type classifications for adaptive endpointing
+ * Determines how long to wait before considering speech complete
+ */
+const INTENT_ENDPOINTING = {
+  command: { timeout: 1500, description: 'Short phrases, quick actions' },
+  conversation: { timeout: 4000, description: 'Natural backchannels' },
+  query: { timeout: 2500, description: 'Complete questions' },
+  story: { timeout: 5000, description: 'Creative, longer responses' },
+  default: { timeout: 3000, description: 'Standard timeout' }
+};
+
+/**
+ * Classify intent type for adaptive endpointing
+ * @param {string} intentName - Name of the intent
+ * @returns {string} Intent type
+ */
+function classifyIntentType(intentName) {
+  if (!intentName) return 'default';
+  if (intentName.includes('Command') || intentName.includes('Control')) return 'command';
+  if (intentName.includes('Story') || intentName.includes('Generate')) return 'story';
+  if (intentName.includes('Query') || intentName.includes('Search') || intentName.includes('Lookup')) return 'query';
+  if (intentName.includes('Chat') || intentName.includes('Conversation')) return 'conversation';
+  return 'default';
+}
+
+/**
+ * Get endpointing config for an intent
+ * @param {string} intentName - Intent name
+ * @returns {Object} Endpointing config with timeout
+ */
+function getEndpointingConfig(intentName) {
+  const type = classifyIntentType(intentName);
+  return INTENT_ENDPOINTING[type] || INTENT_ENDPOINTING.default;
+}
+
+/**
+ * Check if user is continuing interrupted speech
+ * @param {Object} session - Session attributes
+ * @returns {boolean} True if resuming
+ */
+function isResumingInterrupted(session) {
+  return session?.interrupted === true && session?.pendingResponse === true;
+}
+
+/**
+ * Mark session as interrupted (for barge-in detection)
+ * @param {Object} session - Session attributes
+ * @returns {Object} Updated session with interruption flag
+ */
+function markInterrupted(session) {
+  return {
+    ...session,
+    interrupted: true,
+    pendingResponse: session?.pendingResponse || false
+  };
+}
+
+/**
+ * Clear interruption state
+ * @param {Object} session - Session attributes
+ * @returns {Object} Updated session without interruption
+ */
+function clearInterruption(session) {
+  const { interrupted, pendingResponse, ...clean } = session || {};
+  return clean;
+}
+
+/**
  * Auto-detect accent/language from user input text (story theme + setting)
  * Uses script detection + keyword patterns to determine language and regional accent
  * Priority: explicit session > auto-detected > default
@@ -194,42 +334,42 @@ function detectAccentFromInput(text) {
   // Bengali script: U+0980 to U+09FF
   if (/[ঀ-৿]/.test(text)) {
     return /sylhet|assam|bangladesh|dacca/i.test(text)
-      ? { lang: 'bengali', accent: 'sylheti', conf: 'high' }
-      : { lang: 'bengali', accent: 'kolkata_bengali', conf: 'high' };
+      ? { language: 'bengali', accent: 'sylheti', confidence: 'high' }
+      : { language: 'bengali', accent: 'kolkata_bengali', confidence: 'high' };
   }
   // Gurmukhi script: U+0A00 to U+0A7F
   if (/[਀-੿]/.test(text)) {
-    return { lang: 'punjabi', accent: 'punjabi_hindi', conf: 'high' };
+    return { language: 'punjabi', accent: 'punjabi_hindi', confidence: 'high' };
   }
   // Devanagari script: U+0900 to U+097F (checked AFTER Bengali/Gurmukhi to avoid misclassification)
   if (/[ऀ-ॿ]/.test(text)) {
-    return { lang: 'hindi', accent: 'hindi_pure', conf: 'high' };
+    return { language: 'hindi', accent: 'hindi_pure', confidence: 'high' };
   }
 
   // === REGIONAL KEYWORDS (check BEFORE vocabulary to ensure Hindi regional variants override) ===
   // Punjabi regions
   if (/punjab|punjabi|amritsar|ludhiana|chandigarh/i.test(lower)) {
-    return { lang: 'hindi', accent: 'punjabi_hindi', conf: 'high' };
+    return { language: 'hindi', accent: 'punjabi_hindi', confidence: 'high' };
   }
   // Lucknow / Awadhi regions
   if (/lucknow|nawab|awadh|awadhi|lko/i.test(lower)) {
-    return { lang: 'hindi', accent: 'lucknow_hindi', conf: 'high' };
+    return { language: 'hindi', accent: 'lucknow_hindi', confidence: 'high' };
   }
   // Delhi / North India
   if (/delhi|dilli|north india|new delhi/i.test(lower)) {
-    return { lang: 'hindi', accent: 'delhi_hindi', conf: 'high' };
+    return { language: 'hindi', accent: 'delhi_hindi', confidence: 'high' };
   }
   // Mumbai / Bollywood
   if (/mumbai|bombay|filmi|bollywood/i.test(lower)) {
-    return { lang: 'hinglish', accent: 'hinglish_mumbai', conf: 'high' };
+    return { language: 'hinglish', accent: 'hinglish_mumbai', confidence: 'high' };
   }
   // Pune / Marathi
   if (/pune|punes|marathi|puneri|maharashtra/i.test(lower)) {
-    return { lang: 'hinglish', accent: 'hinglish_pune', conf: 'high' };
+    return { language: 'hinglish', accent: 'hinglish_pune', confidence: 'high' };
   }
   // Sylhet / Bangladesh / Assam (Bengali regions - checked before generic Bengali)
   if (/sylhet|assam|bangladesh|dacca|chittagong|khulna/i.test(lower)) {
-    return { lang: 'bengali', accent: 'sylheti', conf: 'high' };
+    return { language: 'bengali', accent: 'sylheti', confidence: 'high' };
   }
 
   // === LATIN SCRIPT: BENGALI-EXCLUSIONARY (research-backed approach) ===
@@ -283,13 +423,13 @@ function detectAccentFromInput(text) {
 
   // 2+ Bengali markers = Bengali
   if (benCount >= 2) {
-    return { lang: 'bengali', accent: 'kolkata_bengali', conf: 'high' };
+    return { language: 'bengali', accent: 'kolkata_bengali', confidence: 'high' };
   }
   // Even 1 strong marker = Bengali (use LOW confidence)
   const BEN_STRONG = ['ami ', 'tumi', 'keno', 'bhalo', 'bondhu', 'bolchi', 'jacch', 'gele', 'hobe', 'ekhon', 'somoy', 'kemon', 'onek', 'shundor', 'amra', 'bhalobasha', 'meye', 'chele', 'golpo', 'jibon', 'hridoy', 'chokh', 'shobai', 'shob ', 'kichu', 'keu '];
   for (const w of BEN_STRONG) {
     if (lower.includes(w)) {
-      return { lang: 'bengali', accent: 'kolkata_bengali', conf: 'low' };
+      return { language: 'bengali', accent: 'kolkata_bengali', confidence: 'low' };
     }
   }
 
@@ -303,7 +443,7 @@ function detectAccentFromInput(text) {
     { re: /ya mon|irie|everyting|we be jammin/i, accent: 'caribbean' },
   ];
   for (const { re, accent } of englishAccents) {
-    if (re.test(lower)) return { lang: 'english', accent, conf: 'high' };
+    if (re.test(lower)) return { language: 'english', accent, confidence: 'high' };
   }
 
   // === LATIN SCRIPT: HINGLISH (English word density + Hindi presence) ===
@@ -312,18 +452,18 @@ function detectAccentFromInput(text) {
   const hindiWords = ['hai', 'kya', 'kaun', 'kyun', 'kaise', 'kaha', 'ka', 'ki', 'ke', 'ko', 'se', 'pe', 'aur', 'ya', 'na', 'to', 'bhi', 'hi', 'mat', 'ek', 'do', 'teen', 'char', 'panch', 'hai', 'ho', 'hain', 'tha', 'the', 'hoga', 'hogi', 'ja', 'jao', 'aana', 'jaana', 'dekho', ' bolo', 'sun', 'sunna', 'sunni', 'chalo', 'chal', 'karna', 'karo', 'kehta', 'bolna', 'sab', 'kuch', 'koi', 'har', 'accha', 'theek', 'mast', 'zabardast', 'badiya', 'shandaar'];
   const hindiWordCount = hindiWords.filter(w => lower.includes(w)).length;
   const englishWordCount = englishWords.filter(w => lower.includes(w)).length;
-  const totalWords = lower.split(/s+/).length;
+  const totalWords = lower.split(/\s+/).length;
   const englishRatio = englishWordCount / Math.max(totalWords, 1);
 
   // Hinglish: English word density >= 30% AND some Hindi words present
   if (englishRatio >= 0.3 && hindiWordCount >= 2) {
     // Already checked regional markers above, so default to Hinglish
-    return { lang: 'hinglish', accent: 'hinglish_pune', conf: 'medium' };
+    return { language: 'hinglish', accent: 'hinglish_pune', confidence: 'medium' };
   }
 
   // === LATIN SCRIPT: GENERIC HINDI (only if strong Hindi signal) ===
   if (hindiWordCount >= 5) {
-    return { lang: 'hindi', accent: 'hindi_pure', conf: 'medium' };
+    return { language: 'hindi', accent: 'hindi_pure', confidence: 'medium' };
   }
 
   return null; // No match — default accent will be used
@@ -619,7 +759,7 @@ exports.alexaHandler = async (req, res) => {
         // Use default greeting
       }
 
-      greeting += ` I can play music on Spotify, control your TV with Kodi, send WhatsApp messages, search Twitter and Reddit, tell you Wikipedia facts, translate languages, and spin epic stories. For example, try saying: "${example.query}" - that's our ${example.desc} feature in action! What can I help you with?`;
+      greeting += ` Try saying "${example.query}" for ${example.desc}. What can I help you with?`;
 
       res.json({
         version: '1.0',
@@ -635,13 +775,12 @@ exports.alexaHandler = async (req, res) => {
             content: `Powered by AgentOrchestrator + PersonaGenerator + ServiceMesh | Persona: ${currentPersona}`
           }
         },
-        sessionAttributes: {
+        sessionAttributes: buildSessionAttributes(incomingSessionAttributes, 'greeting', {
           lastQuery: '',
-          conversationCount: 0,
-          lastTopic: '',
+          conversationCount: (incomingSessionAttributes.conversationCount || 0) + 1,
           currentPersona: currentPersona,
           version: '2.0'
-        }
+        })
       });
       return;
     }
@@ -1042,9 +1181,10 @@ exports.alexaHandler = async (req, res) => {
           });
           if (response.ok) {
             const data = await response.json();
+            const brief = briefResponse(`${topic}: ${data.extract || 'No information found.'}`, 20);
             res.json({
               version: '1.0',
-              response: { outputSpeech: { type: 'PlainText', text: `${persona.name} (${persona.age}) here. ${topic}: ${data.extract || 'No information found.'}` }, shouldEndSession: false }
+              response: { outputSpeech: { type: 'PlainText', text: `${persona.name} (${persona.age}) here. ${brief}` }, shouldEndSession: false }
             });
           } else {
             res.json({
@@ -1070,10 +1210,11 @@ exports.alexaHandler = async (req, res) => {
         try {
           const client = getClient('NewsClient');
           const newsResult = await client.getHeadlines();
+          const brief = briefResponse(`${newsResult.headlines || newsResult.news || 'Unable to fetch news at this time.'}`, 15, 'Want headlines?');
           res.json({
             version: '1.0',
             response: {
-              outputSpeech: { type: 'PlainText', text: `${persona.name} here. Here are the top news headlines: ${newsResult.headlines || newsResult.news || 'Unable to fetch news at this time.'}` },
+              outputSpeech: { type: 'PlainText', text: `${persona.name} here. ${brief}` },
               shouldEndSession: false
             }
           });
@@ -1679,7 +1820,7 @@ exports.alexaHandler = async (req, res) => {
               res.json({
                 version: '1.0',
                 response: {
-                  outputSpeech: { type: 'PlainText', text: `WhatsApp message sent to ${recipient}: ${message}` },
+                  outputSpeech: { type: 'PlainText', text: `WhatsApp message sent to ${recipient}` },
                   shouldEndSession: false
                 }
               });
@@ -1886,6 +2027,139 @@ exports.instagramBookmarksHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Instagram bookmarks error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * OmniClaw 2.0 Simplified Handler
+ *
+ * Uses OmniClawIntegration for Jony Ive-inspired simplified interactions:
+ * - Smart Router for intent routing
+ * - Transparency Layer for AI visibility
+ * - Smart Defaults for intelligent defaults
+ * - Progressive Disclosure for feature discovery
+ * - Context-Aware Simplification for platform optimization
+ *
+ * This endpoint provides a simplified natural language interface
+ * that preserves all 19 capabilities while reducing cognitive load.
+ */
+exports.omniclaw2Handler = async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    const { omniClawIntegration } = initializeOmniClaw2();
+
+    const body = req.body || {};
+    const { query, platform = 'alexa', sessionId = 'omniclaw2_session' } = body;
+
+    if (!query) {
+      res.json({
+        success: false,
+        error: 'Missing query parameter'
+      });
+      return;
+    }
+
+    console.log(`[OmniClaw2 Handler] Query: "${query}" (platform: ${platform})`);
+
+    // Process through OmniClawIntegration
+    const result = await omniClawIntegration.processQuery(query, { platform, sessionId });
+
+    // Return the response
+    res.json({
+      success: true,
+      response: result
+    });
+
+  } catch (error) {
+    console.error('[OmniClaw2 Handler] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * OmniClaw 2.0 Contextual Greeting Handler
+ *
+ * Returns contextual greetings based on time of day and platform.
+ * Uses OmniClawIntegration for personalized experience.
+ */
+exports.omniclaw2GreetingHandler = async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    const { omniClawIntegration } = initializeOmniClaw2();
+
+    const platform = req.query.platform || 'alexa';
+
+    const greeting = omniClawIntegration.getContextualGreeting(platform);
+
+    res.json({
+      success: true,
+      response: greeting.response
+    });
+
+  } catch (error) {
+    console.error('[OmniClaw2 Greeting] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * OmniClaw 2.0 Discovery Handler
+ *
+ * Returns capability discovery information for new users.
+ */
+exports.omniclaw2DiscoveryHandler = async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    const { omniClawIntegration } = initializeOmniClaw2();
+
+    const platform = req.query.platform || 'alexa';
+    const sessionId = req.query.sessionId || 'discovery_session';
+
+    const discovery = omniClawIntegration.getDiscoveryResponse(platform, {
+      interactionCount: 0
+    });
+
+    res.json({
+      success: true,
+      response: discovery.response
+    });
+
+  } catch (error) {
+    console.error('[OmniClaw2 Discovery] Error:', error.message);
     res.status(500).json({
       success: false,
       error: error.message
