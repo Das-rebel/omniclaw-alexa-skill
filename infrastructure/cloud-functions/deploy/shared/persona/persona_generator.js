@@ -421,7 +421,8 @@ class PersonaGenerator extends EventEmitter {
       'ArxivIntent': { ...this.personaTemplates.technical, expertise_domains: ['research', 'science', 'academia'], personality_traits: ['analytical', 'precise', 'thorough'] },
       'SpotifyIntent': { ...this.personaTemplates.friendly, expertise_domains: ['music', 'entertainment', 'audio'], personality_traits: ['enthusiastic', 'casual', 'fun'] },
       'KodiIntent': { ...this.personaTemplates.technical, expertise_domains: ['media', 'home_theater', 'entertainment'], personality_traits: ['helpful', 'technical', 'efficient'] },
-      'WhatsAppIntent': { ...this.personaTemplates.professional, expertise_domains: ['messaging', 'communication'], personality_traits: ['reliable', 'discreet', 'prompt'] }
+      'WhatsAppIntent': { ...this.personaTemplates.professional, expertise_domains: ['messaging', 'communication'], personality_traits: ['reliable', 'discreet', 'prompt'] },
+      'VaultIntent': { ...this.personaTemplates.professional, expertise_domains: ['knowledge', 'personal_info', 'memory'], personality_traits: ['knowledgeable', 'organized', 'helpful'] }
     };
 
     return capabilityMap[capability] || this.getDefaultPersona();
