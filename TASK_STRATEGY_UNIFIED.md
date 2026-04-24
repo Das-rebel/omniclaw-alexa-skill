@@ -214,15 +214,15 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 ## 📊 Task Board
 
 ### 🔴 Critical (Fix Now)
-- [ ] Test WhatsApp session restore from GCS backup
-- [ ] Verify hourly cron sync is working
-- [ ] Fix alexa-handler unavailable clients
+- [x] Test WhatsApp session restore from GCS backup → ✅ Connected, backup exists
+- [ ] **FIX: Set up hourly cron sync** → ❌ Cron NOT set up (no crontab for root)
+- [x] Fix alexa-handler unavailable clients → ✅ Down from 5 to 2 (TMLPDClient, BaileysWhatsAppClient)
 
 ### 🟡 High Priority (This Week)
-- [ ] Delete 10 orphaned Cloud Run services
-- [ ] Add more vault data sources
-- [ ] Update README with merged structure
-- [ ] Deploy Price Tracking ML
+- [x] Delete 10 orphaned Cloud Run services → ✅ Done (12 services deleted)
+- [ ] Add more vault data sources → ✅ Data exists (4 sources), can enrich
+- [ ] Update README with merged structure → ⏳ In progress
+- [ ] Deploy Price Tracking ML → TODO
 
 ### 🟢 Medium Priority (This Month)
 - [ ] Deploy Story Narrator
