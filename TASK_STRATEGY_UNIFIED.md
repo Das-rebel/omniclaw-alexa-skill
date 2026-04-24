@@ -227,13 +227,19 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 - [ ] Deploy Celebrity TTS → ✅ Source ready, Dockerfile exists
 
 ### 🟢 Medium Priority (This Month)
-- [ ] Deploy Celebrity TTS → 🔧 Redeploying - was running on port 8000 instead of 8080 (FIXED)
-- [ ] Deploy Story Narrator → 🔧 MODULE_NOT_FOUND - orchestrator imports broken
-- [ ] Deploy Price Tracking → 🔧 SyntaxError in redis-streams-service.js
-- [x] Set up CI/CD pipeline → ✅ GitHub Actions workflow created
-- [x] Fix vault search endpoint → ✅ Vault works via `/` health endpoint
-- [ ] Terraform infrastructure-as-code
-- [ ] Clean up docs/ directory
+- [x] Deploy Celebrity TTS → ✅ Deployed (health works, model lazy loads)
+- [ ] Fix Price Tracking → 🔧 Syntax fixed, but has redis dependency issue
+- [ ] Fix Story Narrator → 🔧 Needs source code cleanup before redeploy
+- [x] Terraform setup → ✅ Created infrastructure-enhanced/terraform/gcp/
+- [x] Clean docs/ → ✅ Removed ARCHITECTURAL-*, V2_*.md (17 docs remaining)
+- [ ] Set up CI/CD → ⏸️ GitHub Actions need special OAuth scope
+
+### ⚪ Low Priority (Backlog)
+- [ ] Deploy Price Tracking (needs redis mock or removal)
+- [ ] Deploy Story Narrator (needs source cleanup)
+- [ ] Deploy Email Intelligence
+- [ ] Deploy Analytics Dashboard
+- [ ] Multi-region deployment
 
 ### ⚪ Low Priority (Backlog)
 - [ ] Deploy Email Intelligence
