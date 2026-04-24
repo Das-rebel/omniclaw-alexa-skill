@@ -70,32 +70,26 @@ app.get('/api/bookmarks/instagram', async (req, res) => {
   }
 });
 
-// Instagram scraper endpoint - direct scraper access using Puppeteer
+// Instagram bookmarks endpoint - reads from vault (synced by Python cron)
 app.post('/scrape/instagram', async (req, res) => {
   try {
-    const DirectInstagramScraper = require('./clients/direct_instagram_scraper');
-    const sessionId = req.body.sessionId || process.env.INSTAGRAM_SESSION_ID;
+    const fs = require('fs');
+    const path = require('path');
+    const vaultPath = path.join(__dirname, 'learning_base/instagram_scrape.json');
 
-    // Parse session ID if URL encoded
-    const actualSessionId = decodeURIComponent(sessionId || '');
+    let savedContent = [];
+    if (fs.existsSync(vaultPath)) {
+      const data = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+      savedContent = Array.isArray(data) ? data : data.posts || [];
+    }
 
-    const scraper = new DirectInstagramScraper({
-      cookies: {
-        sessionid: actualSessionId,
-        csrftoken: process.env.INSTAGRAM_CSRF_TOKEN,
-        ds_user_id: process.env.INSTAGRAM_DS_USER_ID
-      }
-    });
-
-    console.log('📸 Starting direct Instagram scrape with Puppeteer...');
-    const savedContent = await scraper.scrapeSavedContent();
-
+    console.log(`📸 Instagram scrape: ${savedContent.length} posts from vault`);
     res.json({
       success: true,
-      savedContent: savedContent
+      savedContent: savedContent.slice(0, 50)
     });
   } catch (error) {
-    console.error('Direct Instagram scrape failed:', error.message);
+    console.error('Instagram vault read failed:', error.message);
     res.status(500).json({
       success: false,
       error: error.message

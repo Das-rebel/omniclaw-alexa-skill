@@ -1,0 +1,52 @@
+{
+  "name": "@omniclaw/price-tracking",
+  "version": "2.0.0",
+  "description": "Redis Streams Price Tracking System with stealth scraping and real-time alerts",
+  "main": "services/price-tracking-coordinator.js",
+  "scripts": {
+    "start": "node services/price-tracking-coordinator.js",
+    "dev": "nodemon services/price-tracking-coordinator.js",
+    "init": "node -e \"const coordinator = require('./services/price-tracking-coordinator'); const c = new coordinator(); c.initialize().then(() => console.log('Initialized')).catch(console.error);\"",
+    "test": "jest",
+    "test:scrapers": "jest tests/scrapers",
+    "test:services": "jest tests/services",
+    "scrape": "node src/cli.js scrape",
+    "schedule": "node src/cli.js schedule",
+    "monitor": "node src/cli.js monitor",
+    "create-scheduler": "node -e \"const SchedulerService = require('./services/scheduler-service'); const s = new SchedulerService(); s.createScheduledJobs().then(console.log).catch(console.error);\""
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.25.1",
+    "playwright": "^1.40.0",
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^3.3.2",
+    "@sendgrid/mail": "^8.1.0",
+    "twilio": "^4.19.0",
+    "aws-sdk": "^2.1500.0",
+    "google-auth-library": "^9.4.0",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0",
+    "joi": "^17.11.0",
+    "axios": "^1.6.5",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "price-tracking",
+    "redis-streams",
+    "web-scraping",
+    "playwright",
+    "alexa",
+    "notifications",
+    "ecommerce"
+  ],
+  "author": "OmniClaw",
+  "license": "MIT"
+}

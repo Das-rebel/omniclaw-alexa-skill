@@ -152,30 +152,30 @@ cat > /tmp/trigger_vl_agents.js << 'TRIGGER'
 /**
  * VL Agent Trigger - Triggers all 4 VL agents in parallel
  * Called after bookmark scraping completes
+ *
+ * NOTE: Cloud Run services get random URLs. After deploying VL agents,
+ * update AGENT_URLS with actual URLs from: gcloud run services list
  */
 const https = require('https');
 
-const AGENT_URLS = [
-  'https://vl-agent-1-{region}-{project}.run.app',
-  'https://vl-agent-2-{region}-{project}.run.app',
-  'https://vl-agent-3-{region}-{project}.run.app',
-  'https://vl-agent-4-{region}-{project}.run.app'
-];
-
 const REGION = process.env.REGION || 'asia-south1';
 const PROJECT = process.env.PROJECT_ID || 'omniclaw-personal-assistant';
+
+// Get actual VL agent URLs from Cloud Run
+// Run: gcloud run services list --filter vl-agent --format 'value(STATUS.url)'
+const AGENT_URLS = [
+  `https://vl-agent-1-${PROJECT}.a.run.app`,
+  `https://vl-agent-2-${PROJECT}.a.run.app`,
+  `https://vl-agent-3-${PROJECT}.a.run.app`,
+  `https://vl-agent-4-${PROJECT}.a.run.app`
+];
 
 async function triggerAllAgents() {
   console.log('Triggering VL agents...');
 
   const promises = AGENT_URLS.map((url, i) => {
-    const agentUrl = url
-      .replace('{region}', REGION)
-      .replace('{project}', PROJECT);
-
-    console.log(`Triggering agent ${i+1}: ${agentUrl}`);
-
-    return fetch(agentUrl, { method: 'GET' })
+    console.log(`Triggering agent ${i+1}: ${url}`);
+    return fetch(url, { method: 'GET', timeout: 30000 })
       .then(r => console.log(`Agent ${i+1}: ${r.status}`))
       .catch(e => console.error(`Agent ${i+1} failed: ${e.message}`));
   });

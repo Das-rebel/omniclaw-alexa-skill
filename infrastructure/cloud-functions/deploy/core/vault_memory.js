@@ -5,35 +5,7 @@
  * surfaced in future conversations.
  */
 
-class VaultClient {
-  /**
-   * Basic vault client for querying vault content
-   * In production, this would connect to actual vault service
-   */
-  constructor(options = {}) {
-    this.vaultUrl = options.vaultUrl || 'https://vault.example.com';
-  }
-
-  /**
-   * Query vault for content matching a topic
-   * @param {string} query - Search query
-   * @returns {Promise<Array>} Matching vault items
-   */
-  async query(query) {
-    // Placeholder - integrate with actual vault API
-    return [];
-  }
-
-  /**
-   * Get vault item by ID
-   * @param {string} id - Item ID
-   * @returns {Promise<Object>} Vault item
-   */
-  async getItem(id) {
-    // Placeholder - integrate with actual vault API
-    return null;
-  }
-}
+const VaultClient = require('../clients/vault_client');
 
 class VaultMemory {
   constructor(options = {}) {
@@ -89,28 +61,22 @@ class VaultMemory {
 
   /**
    * Surface relevant vault content based on conversation topic
-   * @param {string} conversationId - Conversation/session ID
-   * @param {string} currentTopic - Current conversation topic
-   * @returns {Promise<Object>} { directMatches, tangential, confidence }
    */
   async surfaceRelevantVault(conversationId, currentTopic) {
-    // Query vault for content matching currentTopic
     let vaultResults = [];
     try {
-      vaultResults = await this.vaultClient.query(currentTopic);
+      vaultResults = this.vaultClient.findKnowledge(currentTopic);
     } catch (err) {
       console.error('Vault query failed:', err);
     }
 
-    // Get existing refs to avoid duplication
     const existingRefs = this.getConversationVaultRefs(conversationId);
     const existingIds = new Set(existingRefs.map(r => r.id));
 
-    // Separate direct matches (not already referenced) from tangential
     const directMatches = [];
     const tangential = [];
 
-    for (const item of vaultResults) {
+    for (const item of vaultResults.topics || vaultResults.skills || vaultResults.places || vaultResults.food || []) {
       if (existingIds.has(item.id)) {
         tangential.push(item);
       } else {
@@ -180,4 +146,4 @@ class VaultMemory {
   }
 }
 
-module.exports = { VaultMemory, VaultClient };
+module.exports = { VaultMemory };

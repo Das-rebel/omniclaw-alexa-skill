@@ -1,0 +1,16 @@
+{
+  "name": "omniclaw-cloud-functions",
+  "version": "1.0.0",
+  "description": "OmniClaw Personal Assistant - Cloud Functions",
+  "main": "functions.js",
+  "scripts": {
+    "deploy": "gcloud functions deploy omniclaw-health --gen2 --region=asia-south1 --source=. --entry-point=healthHandler --trigger-http --allow-unauthenticated --runtime=nodejs22 --project=omniclaw-enhanced",
+    "deploy:alexa": "gcloud functions deploy omniclaw-alexa --gen2 --region=asia-south1 --source=. --entry-point=alexaHandler --trigger-http --allow-unauthenticated --memory=2048MB --timeout=120s --runtime=nodejs22 --project=omniclaw-enhanced"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.5.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

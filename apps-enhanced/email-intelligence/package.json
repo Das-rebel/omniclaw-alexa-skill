@@ -1,0 +1,29 @@
+{
+  "name": "@omniclaw/email-intelligence",
+  "version": "1.0.0",
+  "description": "Email Intelligence System with CrewAI multi-agent architecture",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "crewai": "^0.1.0",
+    "googleapis": "^128.0.0",
+    "@azure/msal-node": "^2.0.0",
+    "openai": "^4.20.0",
+    "axios": "^1.6.5",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

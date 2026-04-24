@@ -611,56 +611,70 @@ exports.syncHandler = async (req, res) => {
       const kgNodes = [];
       const kgRelationships = [];
 
-      // Process Twitter bookmarks
+      // Process Twitter bookmarks - read from vault (scraped by Python cron, synced via GCS)
       if (syncResult.platforms?.twitter?.count > 0) {
-        const TwitterScraperClient = require('./clients/twitter_scraper_client');
-        const twitterClient = new TwitterScraperClient();
-        const twitterBookmarks = await twitterClient.getBookmarks(100).catch(() => []);
-
-        twitterBookmarks.forEach((bm, i) => {
-          const nodeId = `twitter_${bm.id || bm.tweet_id || i}`;
-          kgNodes.push({
-            id: nodeId,
-            name: bm.text?.substring(0, 100) || 'Twitter Bookmark',
-            type: 'twitter_tweet',
-            content: bm.text || '',
-            url: bm.url || bm.permalink || '',
-            metadata: {
-              username: bm.username || bm.author || '',
-              likes: bm.likes || bm.like_count || 0,
-              retweets: bm.retweets || bm.retweet_count || 0,
-              savedAt: bm.saved_at || bm.timestamp || new Date().toISOString(),
-              platform: 'twitter'
-            }
-          });
-        });
-        console.log(`📚 Added ${twitterBookmarks.length} Twitter bookmarks to KG`);
+        // Twitter bookmarks already synced to GCS by vm_sync.sh - read from local vault
+        const fs = require('fs');
+        const vaultPath = require('path').join(__dirname, 'learning_base/twitter_bookmarks_automated.json');
+        try {
+          if (fs.existsSync(vaultPath)) {
+            const twitterData = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+            const bookmarks = twitterData.bookmarks || [];
+            bookmarks.forEach((bm, i) => {
+              const nodeId = `twitter_${bm.id || i}`;
+              kgNodes.push({
+                id: nodeId,
+                name: bm.text?.substring(0, 100) || 'Twitter Bookmark',
+                type: 'twitter_tweet',
+                content: bm.text || '',
+                url: bm.url || '',
+                metadata: {
+                  username: bm.username || '',
+                  likes: bm.likes || 0,
+                  retweets: bm.retweets || 0,
+                  savedAt: bm.saved_at || bm.timestamp || new Date().toISOString(),
+                  platform: 'twitter'
+                }
+              });
+            });
+            console.log(`📚 Added ${bookmarks.length} Twitter bookmarks to KG`);
+          }
+        } catch (e) {
+          console.log('Twitter vault read skipped:', e.message);
+        }
       }
 
-      // Process Instagram bookmarks
+      // Process Instagram bookmarks - read from vault (scraped by Python cron, synced via GCS)
       if (syncResult.platforms?.instagram?.count > 0) {
-        const InstagramScraperClient = require('./clients/instagram_scraper_client');
-        const instagramClient = new InstagramScraperClient();
-        const instagramSaved = await instagramClient.getSavedContent(50).catch(() => []);
-
-        instagramSaved.forEach((item, i) => {
-          const nodeId = `instagram_${item.id || item.pk || i}`;
-          kgNodes.push({
-            id: nodeId,
-            name: item.caption?.substring(0, 100) || 'Instagram Saved',
-            type: 'instagram_post',
-            content: item.caption || '',
-            url: item.permalink || item.url || '',
-            metadata: {
-              mediaType: item.media_type || item.type || 'image',
-              likes: item.like_count || 0,
-              comments: item.comments_count || 0,
-              savedAt: item.timestamp || new Date().toISOString(),
-              platform: 'instagram'
-            }
-          });
-        });
-        console.log(`📚 Added ${instagramSaved.length} Instagram posts to KG`);
+        // Instagram posts already synced to GCS by vm_sync.sh - read from local vault
+        const fs = require('fs');
+        const vaultPath = require('path').join(__dirname, 'learning_base/instagram_scrape.json');
+        try {
+          if (fs.existsSync(vaultPath)) {
+            const instagramData = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+            const posts = Array.isArray(instagramData) ? instagramData : instagramData.posts || [];
+            posts.slice(0, 50).forEach((item, i) => {
+              const nodeId = `instagram_${item.id || i}`;
+              kgNodes.push({
+                id: nodeId,
+                name: item.caption?.substring(0, 100) || 'Instagram Saved',
+                type: 'instagram_post',
+                content: item.caption || '',
+                url: item.permalink || item.url || '',
+                metadata: {
+                  mediaType: item.mediaType || item.type || 'image',
+                  likes: item.like_count || 0,
+                  comments: item.comments_count || 0,
+                  savedAt: item.timestamp || new Date().toISOString(),
+                  platform: 'instagram'
+                }
+              });
+            });
+            console.log(`📚 Added ${posts.length} Instagram posts to KG`);
+          }
+        } catch (e) {
+          console.log('Instagram vault read skipped:', e.message);
+        }
       }
 
       // Add entity and topic nodes from existing knowledge graph
@@ -846,6 +860,71 @@ exports.alexaHandler = async (req, res) => {
         // Determine which service handled the request (for logging)
         let serviceHandler = 'agentOrchestrator';
         let compressionStats = null;
+
+        // Detect vault-related queries and handle directly
+        const queryLower = query.toLowerCase();
+        const vaultKeywords = ['vault', 'search my vault', 'find in my vault', 'my saved', 'bookmarks', 'what do i have saved', 'remember', 'knowledge graph'];
+        const isVaultQuery = vaultKeywords.some(k => queryLower.includes(k)) ||
+                          (queryLower.includes('search') && queryLower.includes('for'));
+        if (isVaultQuery) {
+          const VaultClient = require('./clients/vault_client');
+          const vault = new VaultClient();
+          const { personaGenerator } = initializeOmniClaw2();
+          const persona = personaGenerator.getCapabilityPersona('VaultIntent');
+          const vaultName = persona.name || 'Vault Assistant';
+
+          // Special case: vault stats - return statistics
+          if (queryLower.includes('stats') || queryLower === 'vault') {
+            const stats = vault.getStats();
+            res.json({
+              version: '1.0',
+              response: { outputSpeech: { type: 'PlainText', text: `${vaultName} here. Your vault contains ${stats.vault.totalPosts} posts with ${stats.knowledgeGraph.totalNodes} knowledge nodes including ${stats.knowledgeGraph.topics} topics and ${stats.knowledgeGraph.skills} skills. What would you like to explore?` }, shouldEndSession: false },
+              sessionAttributes: buildSessionAttributes(incomingSessionAttributes, 'vault_stats', { lastQuery: query, version: '2.0' })
+            });
+            return;
+          }
+
+          // Extract search term (remove vault keywords)
+          let searchTerm = queryLower
+            .replace(/search\s*(my)?\s*(vault|bookmarks|saved)?\s*(for)?\s*/gi, '')
+            .replace(/find\s*(in)?\s*(my)?\s*(vault)?\s*/gi, '')
+            .replace(/what\s*(do)?\s*(i\s*)?(have)?\s*(saved)?\s*/gi, '')
+            .replace(/remember\s*/gi, '')
+            .replace(/knowledge\s*graph\s*/gi, '')
+            .trim();
+
+          if (!searchTerm) searchTerm = query;
+
+          const result = vault.findKnowledge(searchTerm);
+          const total = result.topics.length + result.skills.length + result.vaultPosts.length;
+          let responseText = '';
+          if (total > 0) {
+            responseText = `${vaultName} here. Found ${total} items for "${searchTerm}": `;
+            if (result.vaultPosts.length > 0) {
+              responseText += `${result.vaultPosts.length} posts, `;
+            }
+            if (result.topics.length > 0) {
+              responseText += `${result.topics.length} topics, `;
+            }
+            if (result.skills.length > 0) {
+              responseText += `${result.skills.length} skills`;
+            }
+            responseText = responseText.replace(/, $/, '.');
+            if (result.vaultPosts.length > 0) {
+              const topPost = result.vaultPosts[0];
+              responseText += ` Top match: "${topPost.vlSubject || topPost.caption?.substring(0, 80) || 'saved item'}"`;
+            }
+          } else {
+            responseText = `${vaultName} here. No items found for "${searchTerm}" in your vault.`;
+          }
+
+          res.json({
+            version: '1.0',
+            response: { outputSpeech: { type: 'PlainText', text: responseText }, shouldEndSession: false },
+            sessionAttributes: buildSessionAttributes(incomingSessionAttributes, 'vault_search', { lastQuery: query, version: '2.0' })
+          });
+          return;
+        }
 
         try {
           // Get task-specific compressed context using attention-weighted memory
@@ -1574,9 +1653,29 @@ exports.alexaHandler = async (req, res) => {
           // Route to appropriate vault function based on query
           const queryLower = query.toLowerCase();
 
+          // Vault stats - before other routing
+          if (queryLower.includes('vault stats') || queryLower === 'stats') {
+            const stats = vault.getStats();
+            res.json({
+              version: '1.0',
+              response: {
+                outputSpeech: { type: 'PlainText', text: `${vaultName} here. Your vault contains ${stats.knowledgeGraph.totalNodes} items including ${stats.knowledgeGraph.topics} topics and ${stats.knowledgeGraph.skills} skills. What would you like to explore?` },
+                shouldEndSession: false
+              }
+            });
+            return;
+          }
+
           if (queryLower.includes('connect the dots') || queryLower.includes('relate')) {
-            // Extract two topics from query
-            const topics = queryLower.replace(/connect the dots|relate|how are|related/gi, '').trim().split(/\s+and\s+|\s+to\s+/);
+            // Extract two topics from query - handle "between X and Y" pattern
+            let topics = [];
+            const betweenMatch = queryLower.match(/between\s+(\w+(?:\s+\w+)?)\s+and\s+(\w+(?:\s+\w+)?)/i);
+            if (betweenMatch) {
+              topics = [betweenMatch[1].trim(), betweenMatch[2].trim()];
+            } else {
+              const cleaned = queryLower.replace(/connect the dots|relate|cross connect|cross-pollination|how are|related|to/gi, ' ');
+              topics = cleaned.split(/\s+and\s+|\s+/).filter(t => t.length > 1).slice(0, 2);
+            }
             if (topics.length >= 2) {
               const result = vault.connectTheDots(topics[0], topics[1]);
               const text = result.connected
@@ -1588,18 +1687,28 @@ exports.alexaHandler = async (req, res) => {
           }
 
           if (queryLower.includes('food') || queryLower.includes('restaurant') || queryLower.includes('cuisine')) {
-            const cuisine = queryLower.replace(/food|restaurant|cuisine|recommend|me/gi, '').trim();
-            const result = vault.getFoodRecommendations(cuisine || 'indian');
+            // Extract cuisine from middle of phrase
+            const words = queryLower.split(/\s+/);
+            const stopWords = ['food', 'restaurant', 'cuisine', 'recommend', 'recommendations', 'me', 'show', 'some', 'any', 'a', 'an', 'the', 'i', 'want', 'need', 'looking', 'for', 'of', 'in', 'with'];
+            const filtered = words.filter(w => !stopWords.includes(w));
+            let cuisine = filtered.length > 0 ? filtered.join(' ').trim() : 'indian';
+            // If cuisine is too generic or empty, use default
+            if (!cuisine || cuisine.length < 2) cuisine = 'indian';
+            const result = vault.getFoodRecommendations(cuisine);
             const text = result.restaurants.length > 0
-              ? `${vaultName} here. Found ${result.restaurants.length} places serving ${cuisine || 'related'} cuisine.`
+              ? `${vaultName} here. Found ${result.restaurants.length} places serving ${cuisine} cuisine.`
               : `${vaultName} here. No food recommendations found for "${cuisine}" in your vault.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
           }
 
           if (queryLower.includes('skill') || queryLower.includes('learn')) {
-            const skill = queryLower.replace(/skill|learn|learning|path|how do i/gi, '').trim();
-            const result = vault.getSkillLearningPath(skill || 'python');
+            const words = queryLower.split(/\s+/);
+            const stopWords = ['skill', 'skills', 'learn', 'learning', 'path', 'how', 'do', 'i', 'what', 'for', 'a', 'my', 'the', 'show', 'me', 'recommendations', 'some', 'any'];
+            const filtered = words.filter(w => !stopWords.includes(w));
+            let skill = filtered.length > 0 ? filtered.join(' ').trim() : 'python';
+            if (!skill || skill.length < 2) skill = 'python';
+            const result = vault.getSkillLearningPath(skill);
             const text = result
               ? `${vaultName} here. Your ${result.skill?.name || skill} learning path includes ${result.relatedTopics?.length || 0} topics. Estimated time: ${result.estimatedLearnTime}.`
               : `${vaultName} here. No learning path found for "${skill}" in your vault.`;
@@ -1720,12 +1829,15 @@ exports.alexaHandler = async (req, res) => {
             return;
           }
 
-          // Default: search knowledge
-          const result = vault.findKnowledge(query);
+          // Default: search knowledge - strip query words before searching
+          const searchWords = queryLower.split(/\s+/);
+          const searchStopWords = ['search', 'searching', 'vault', 'my', 'for', 'in', 'looking', 'find', 'get', 'show', 'me', 'some', 'any', 'all', 'the', 'a', 'an'];
+          const searchQuery = searchWords.filter(w => !searchStopWords.includes(w)).join(' ').trim();
+          const result = vault.findKnowledge(searchQuery);
           const total = result.topics.length + result.skills.length + result.places.length + result.food.length;
 
           if (total > 0) {
-            const text = `${vaultName} here. Found ${total} items in your vault matching "${query}". ${result.topics.length > 0 ? `${result.topics.length} topics, ` : ''}${result.skills.length > 0 ? `${result.skills.length} skills, ` : ''}${result.places.length > 0 ? `${result.places.length} places, ` : ''}${result.food.length > 0 ? `${result.food.length} food items` : ''}.`;
+            const text = `${vaultName} here. Found ${total} items in your vault matching "${searchQuery}". ${result.topics.length > 0 ? `${result.topics.length} topics, ` : ''}${result.skills.length > 0 ? `${result.skills.length} skills, ` : ''}${result.places.length > 0 ? `${result.places.length} places, ` : ''}${result.food.length > 0 ? `${result.food.length} food items` : ''}.`;
             res.json({ version: '1.0', response: { outputSpeech: { type: 'PlainText', text }, shouldEndSession: false } });
             return;
           }
@@ -1734,7 +1846,7 @@ exports.alexaHandler = async (req, res) => {
           res.json({
             version: '1.0',
             response: {
-              outputSpeech: { type: 'PlainText', text: `${vaultName} here. I couldn't find anything matching "${query}" in your vault. Try searching for topics like AI, Python, or ask about food recommendations.` },
+              outputSpeech: { type: 'PlainText', text: `${vaultName} here. I couldn't find anything matching "${searchQuery}" in your vault. Try searching for topics like AI, Python, or ask about food recommendations.` },
               shouldEndSession: false
             }
           });
@@ -2174,7 +2286,7 @@ exports.alexaHandler = async (req, res) => {
 };
 
 /**
- * Instagram sync handler - fetches bookmarks from Instagram
+ * Instagram sync handler - fetches bookmarks from vault (synced by Python cron)
  */
 exports.instagramSyncHandler = async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -2187,16 +2299,22 @@ exports.instagramSyncHandler = async (req, res) => {
   }
 
   try {
-    const InstagramScraperClient = require('./clients/instagram_scraper_client');
-    const client = new InstagramScraperClient();
+    // Read from local vault (synced from GCS by vm_sync.sh cron)
+    const fs = require('fs');
+    const path = require('path');
+    const vaultPath = path.join(__dirname, 'learning_base/instagram_scrape.json');
 
-    console.log('📸 Syncing Instagram bookmarks...');
-    const bookmarks = await client.getSavedContent(50);
+    let bookmarks = [];
+    if (fs.existsSync(vaultPath)) {
+      const data = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+      bookmarks = Array.isArray(data) ? data : data.posts || [];
+    }
 
+    console.log(`📸 Syncing Instagram bookmarks... ${bookmarks.length} found`);
     res.json({
       success: true,
       count: bookmarks.length,
-      bookmarks: bookmarks
+      bookmarks: bookmarks.slice(0, 50)
     });
   } catch (error) {
     console.error('Instagram sync error:', error.message);
@@ -2208,7 +2326,7 @@ exports.instagramSyncHandler = async (req, res) => {
 };
 
 /**
- * Instagram bookmarks handler - retrieves cached bookmarks
+ * Instagram bookmarks handler - retrieves cached bookmarks from vault
  */
 exports.instagramBookmarksHandler = async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -2221,15 +2339,21 @@ exports.instagramBookmarksHandler = async (req, res) => {
   }
 
   try {
-    const InstagramScraperClient = require('./clients/instagram_scraper_client');
-    const client = new InstagramScraperClient();
+    // Read from local vault (synced from GCS by vm_sync.sh cron)
+    const fs = require('fs');
+    const path = require('path');
+    const vaultPath = path.join(__dirname, 'learning_base/instagram_scrape.json');
 
-    const bookmarks = await client.getSavedContent(50);
+    let bookmarks = [];
+    if (fs.existsSync(vaultPath)) {
+      const data = JSON.parse(fs.readFileSync(vaultPath, 'utf8'));
+      bookmarks = Array.isArray(data) ? data : data.posts || [];
+    }
 
     res.json({
       success: true,
       count: bookmarks.length,
-      bookmarks: bookmarks
+      bookmarks: bookmarks.slice(0, 50)
     });
   } catch (error) {
     console.error('Instagram bookmarks error:', error.message);

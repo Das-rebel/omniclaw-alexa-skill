@@ -15,6 +15,11 @@
 
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+
+const GCS_BUCKET = 'omniclaw-knowledge-graph';
+const GCS_VAULT_PATH = 'vault/instagram_saved_automated.json';
+const GCS_KG_PATH = 'unified_knowledge_graph.json';
 
 class VaultClient {
   constructor(options = {}) {
@@ -24,12 +29,89 @@ class VaultClient {
       path.join(__dirname, '../learning_base/instagram_scrape.json');
     this.cache = new Map();
     this.cacheExpiry = 10 * 60 * 1000; // 10 minutes
+    this.initialized = false;
   }
 
   /**
-   * Load knowledge graph from local storage
+   * Get GCS access token from metadata service (Cloud Run/Cloud Functions)
+   */
+  getGCSToken() {
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'metadata.google.internal',
+        path: '/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://storage.googleapis.com/',
+        method: 'GET',
+        headers: { 'Metadata-Flavor': 'Google' }
+      };
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode === 200) resolve(data);
+          else reject(new Error(`Token request failed: ${res.statusCode}`));
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+  }
+
+  /**
+   * Download file from GCS using service account token
+   */
+  async downloadFromGCS(gcsPath, localPath) {
+    try {
+      const token = await this.getGCSToken();
+      const objectName = encodeURIComponent(gcsPath);
+      const url = `https://storage.googleapis.com/storage/v1/b/${GCS_BUCKET}/o/${objectName}?alt=media`;
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.text();
+        const dir = path.dirname(localPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(localPath, data);
+        return true;
+      }
+    } catch (error) {
+      console.error('[VaultClient] GCS download failed:', error.message);
+    }
+    return false;
+  }
+
+  /**
+   * Sync vault data from GCS to local storage
+   */
+  async syncFromGCS() {
+    try {
+      // Sync vault posts from GCS
+      await this.downloadFromGCS(GCS_VAULT_PATH, this.vaultPath);
+      // Sync knowledge graph from GCS
+      await this.downloadFromGCS(GCS_KG_PATH, this.knowledgeGraphPath);
+      // Clear cache to force reload
+      this.cache.clear();
+      this.initialized = true;
+      console.log('[VaultClient] Synced from GCS');
+    } catch (error) {
+      console.error('[VaultClient] GCS sync failed:', error.message);
+    }
+  }
+
+  /**
+   * Load knowledge graph from local storage (synced from GCS)
+   * Non-blocking: triggers background sync on first call
    */
   loadKnowledgeGraph() {
+    // Trigger background sync from GCS if not yet done
+    if (!this.initialized) {
+      this.initialized = true;
+      // Fire and forget - next call will have fresh data
+      this.syncFromGCS().catch(e => console.error('[VaultClient] Background sync error:', e.message));
+    }
+
     const cacheKey = 'knowledge_graph';
     const cached = this.cache.get(cacheKey);
 
@@ -51,9 +133,17 @@ class VaultClient {
   }
 
   /**
-   * Load vault posts
+   * Load vault posts from local storage (synced from GCS)
+   * Non-blocking: triggers background sync on first call
    */
   loadVaultPosts() {
+    // Trigger background sync from GCS if not yet done
+    if (!this.initialized) {
+      this.initialized = true;
+      // Fire and forget - next call will have fresh data
+      this.syncFromGCS().catch(e => console.error('[VaultClient] Background sync error:', e.message));
+    }
+
     const cacheKey = 'vault_posts';
     const cached = this.cache.get(cacheKey);
 
@@ -75,11 +165,11 @@ class VaultClient {
   }
 
   /**
-   * Find topics and skills matching a query
+   * Find topics and skills matching a query (searches both knowledge graph and vault posts)
    */
   findKnowledge(query) {
     const kg = this.loadKnowledgeGraph();
-    if (!kg) return { topics: [], skills: [], places: [], food: [] };
+    if (!kg) return { topics: [], skills: [], places: [], food: [], vaultPosts: [] };
 
     const queryLower = query.toLowerCase();
     const results = {
@@ -87,10 +177,11 @@ class VaultClient {
       skills: [],
       places: [],
       food: [],
-      relationships: []
+      relationships: [],
+      vaultPosts: []
     };
 
-    // Search nodes
+    // Search nodes in knowledge graph
     for (const node of (kg.nodes || [])) {
       const nameLower = node.name.toLowerCase();
       const typeLower = node.type.toLowerCase();
@@ -108,6 +199,28 @@ class VaultClient {
       if (rel.type.includes(queryLower)) {
         results.relationships.push(rel);
       }
+    }
+
+    // Also search vault posts (Instagram/Twitter scraped content)
+    const vaultPosts = this.loadVaultPosts();
+    if (Array.isArray(vaultPosts)) {
+      const matchedPosts = vaultPosts.filter(post => {
+        const searchText = [
+          post.vlSubject || '',
+          post.vlTags?.join(' ') || '',
+          post.caption || '',
+          post.permalink || ''
+        ].join(' ').toLowerCase();
+        return searchText.includes(queryLower);
+      }).slice(0, 10); // Limit to 10 results
+
+      results.vaultPosts = matchedPosts.map(p => ({
+        id: p.id,
+        vlSubject: p.vlSubject,
+        vlTags: p.vlTags,
+        caption: p.caption?.substring(0, 100),
+        url: p.permalink
+      }));
     }
 
     return results;

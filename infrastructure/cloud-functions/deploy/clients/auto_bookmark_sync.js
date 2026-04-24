@@ -75,24 +75,42 @@ class AutoBookmarkSync {
    * Sync Twitter bookmarks
    */
   async syncTwitter() {
-    // Placeholder - would integrate with Twitter client
-    return { success: true, count: 0, note: 'Not implemented' };
+    try {
+      const TwitterClient = require('./twitter_client');
+      const client = new TwitterClient();
+      const bookmarks = await client.getBookmarks ? await client.getBookmarks(50) : [];
+      return { count: bookmarks.length, success: true };
+    } catch (error) {
+      return { success: false, error: error.message, note: 'API access required' };
+    }
   }
 
   /**
    * Sync Reddit saved posts
    */
   async syncReddit() {
-    // Placeholder - would integrate with Reddit client
-    return { success: true, count: 0, note: 'Not implemented' };
+    try {
+      const RedditClient = require('./reddit_client');
+      const client = new RedditClient();
+      const saved = await client.getSavedPosts ? await client.getSavedPosts(50) : [];
+      return { count: saved.length, success: true };
+    } catch (error) {
+      return { success: false, error: error.message, note: 'OAuth required' };
+    }
   }
 
   /**
    * Sync YouTube watch later
    */
   async syncYoutube() {
-    // Placeholder - would integrate with YouTube client
-    return { success: true, count: 0, note: 'Not implemented' };
+    try {
+      const YouTubeClient = require('./youtube_client');
+      const client = new YouTubeClient();
+      const watchLater = await client.getWatchLater ? await client.getWatchLater(50) : [];
+      return { count: watchLater.length, success: true };
+    } catch (error) {
+      return { success: false, error: error.message, note: 'YouTube API key required' };
+    }
   }
 
   /**
