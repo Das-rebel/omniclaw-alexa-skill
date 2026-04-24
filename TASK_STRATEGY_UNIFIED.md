@@ -227,11 +227,11 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 - [ ] Deploy Celebrity TTS → ✅ Source ready, Dockerfile exists
 
 ### 🟢 Medium Priority (This Month)
-- [ ] Deploy Celebrity TTS → ⏳ Python/XTTS - slow build (~10+ min)
-- [ ] Deploy Story Narrator → 🔧 Build failed - needs Dockerfile fix (uses node:18-alpine, app uses ESM)
-- [ ] Deploy Price Tracking → 🔧 Build failed - needs Dockerfile fix
+- [ ] Deploy Celebrity TTS → ⏳ Python build in progress (~10+ min)
+- [ ] Deploy Story Narrator → 🔧 MODULE_NOT_FOUND - orchestrator imports broken
+- [ ] Deploy Price Tracking → 🔧 SyntaxError in redis-streams-service.js
 - [x] Set up CI/CD pipeline → ✅ GitHub Actions workflow created
-- [x] Fix vault search endpoint → ✅ Vault works, endpoint is `/` not `/search`
+- [x] Fix vault search endpoint → ✅ Vault works via `/` health endpoint
 - [ ] Terraform infrastructure-as-code
 - [ ] Clean up docs/ directory
 
