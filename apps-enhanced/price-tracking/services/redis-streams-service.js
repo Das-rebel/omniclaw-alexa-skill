@@ -55,7 +55,7 @@ class RedisStreamsService {
       for (const [streamKey, streamName] of Object.entries(this.streams)) {
         try {
           // Try to create stream with consumer group
-          await this.redis.xadd(streamName, '*',', 'init', 'true');
+          await this.redis.xadd(streamName, '*', '*', 'init', 'true');
           await this.redis.xgroup_create(
             streamName,
             this.consumerGroups[streamKey],

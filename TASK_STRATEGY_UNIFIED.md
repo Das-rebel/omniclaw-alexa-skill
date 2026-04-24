@@ -227,7 +227,7 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 - [ ] Deploy Celebrity TTS → ✅ Source ready, Dockerfile exists
 
 ### 🟢 Medium Priority (This Month)
-- [ ] Deploy Celebrity TTS → ⏳ Python build in progress (~10+ min)
+- [ ] Deploy Celebrity TTS → 🔧 Redeploying - was running on port 8000 instead of 8080 (FIXED)
 - [ ] Deploy Story Narrator → 🔧 MODULE_NOT_FOUND - orchestrator imports broken
 - [ ] Deploy Price Tracking → 🔧 SyntaxError in redis-streams-service.js
 - [x] Set up CI/CD pipeline → ✅ GitHub Actions workflow created

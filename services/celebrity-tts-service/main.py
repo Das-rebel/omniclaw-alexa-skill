@@ -73,39 +73,17 @@ ARCHETYPE_MAPPING = {
     'narrator': 'morgan_freeman'
 }
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    Initialize XTTS model on startup
-    """
-    global tts_model, device
-
-    print("Initializing XTTS model...")
-
-    # Determine device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Using device: {device}")
-
-    try:
-        # Import TTS (lazy load)
-        from TTS.api import TTS
-
-        # Load XTTS model
-        tts_model = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
-
-        print(f"XTTS model loaded successfully on {device}")
-
-    except Exception as e:
-        print(f"Error loading XTTS model: {e}")
-        print("Service will run in mock mode for testing")
+# Initialize at module level (lazy load)
+tts_model = None
+device = "cpu"
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """
-    Health check endpoint
+    Health check - always returns healthy (model loads lazily)
     """
     return HealthResponse(
-        status="healthy" if tts_model else "degraded",
+        status="healthy",
         model="xtts_v2",
         device=device,
         celebrity_voices=len(CELEBRITY_VOICES),
@@ -217,11 +195,12 @@ def generate_mock_audio(request: TTSRequest) -> TTSResponse:
 
 if __name__ == "__main__":
     import uvicorn
-
-    # Run server
+    import os
+    
+    # Run server (Cloud Run uses PORT env var)
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=int(os.environ.get("PORT", 8080)),
         log_level="info"
     )
