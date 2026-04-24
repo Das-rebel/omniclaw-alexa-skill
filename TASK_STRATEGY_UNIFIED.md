@@ -215,21 +215,24 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 
 ### 🔴 Critical (Fix Now)
 - [x] Test WhatsApp session restore from GCS backup → ✅ Connected, backup exists
-- [ ] **FIX: Set up hourly cron sync** → ❌ Cron NOT set up (no crontab for root)
+- [x] **FIX: Set up hourly cron sync** → ✅ Done (hourly cron + test backup: 172K)
 - [x] Fix alexa-handler unavailable clients → ✅ Down from 5 to 2 (TMLPDClient, BaileysWhatsAppClient)
 
 ### 🟡 High Priority (This Week)
-- [x] Delete 10 orphaned Cloud Run services → ✅ Done (12 services deleted)
-- [ ] Add more vault data sources → ✅ Data exists (4 sources), can enrich
-- [ ] Update README with merged structure → ⏳ In progress
-- [ ] Deploy Price Tracking ML → TODO
+- [x] Delete 10 orphaned Cloud Run services → ✅ Done (12 deleted)
+- [x] Add more vault data sources → ✅ Added bookmarks_automated.json (5 sources now)
+- [x] Update README with merged structure → ✅ Done (README updated, committed)
+- [ ] Deploy Price Tracking ML → ✅ Source ready, needs Docker build
+- [ ] Deploy Story Narrator → ✅ Source ready, needs Docker build
+- [ ] Deploy Celebrity TTS → ✅ Source ready, Dockerfile exists
 
 ### 🟢 Medium Priority (This Month)
-- [ ] Deploy Story Narrator
-- [ ] Deploy Celebrity TTS
+- [ ] Deploy Story Narrator (apps-enhanced/)
+- [ ] Deploy Celebrity TTS (services/ - has Dockerfile!)
 - [ ] Set up CI/CD pipeline
 - [ ] Terraform infrastructure-as-code
 - [ ] Clean up docs/ directory
+- [ ] Fix vault search endpoint (returns 404 for /search)
 
 ### ⚪ Low Priority (Backlog)
 - [ ] Deploy Email Intelligence
