@@ -161,6 +161,31 @@ omniclaw-personal-assistant/          # Main repo (merged)
 
 ---
 
+## 📋 Task Board
+
+### 🔴 Critical (Fix Now)
+- [ ] Test WhatsApp session restore from GCS backup
+- [ ] Verify hourly cron sync is working
+- [ ] Fix alexa-handler unavailable clients (5 clients down)
+
+### 🟡 High Priority (This Week)
+- [ ] Add more vault data sources
+- [ ] Deploy Price Tracking ML from apps-enhanced/
+- [ ] Update README with merged structure
+
+### 🟢 Medium Priority (This Month)
+- [ ] Deploy Story Narrator
+- [ ] Deploy Celebrity TTS
+- [ ] Set up CI/CD pipeline
+- [ ] Terraform infrastructure-as-code
+
+### ⚪ Low Priority (Backlog)
+- [ ] Deploy Email Intelligence
+- [ ] Deploy Analytics Dashboard
+- [ ] Clean up docs/ directory
+
+---
+
 ## 📋 Quick Commands
 
 ```bash
