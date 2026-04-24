@@ -27,8 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
-    "elevenlabs": "^0.16.0",
-    "stream": ">=1.0.0"
+    "elevenlabs": "^0.16.0"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": ">=0.32.0"

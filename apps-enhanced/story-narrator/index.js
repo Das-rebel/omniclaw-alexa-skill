@@ -1,112 +1,115 @@
 /**
- * Story Narrator Engine - Main Entry Point
- * OmniClaw Personal Assistant - Phase 4
- *
- * Complete multi-character voice synthesis system with:
- * - Story generation using Claude 4 Sonnet
- * - Character voice profiles with emotion modulation
- * - Streaming TTS with <400ms latency
- * - Interactive branching narratives
- * - Indian language support
+ * Story Narrator - Restored Version
+ * Multi-character voice synthesis storytelling
  */
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
+const path = require('path');
 
-const { StoryManager, createStoryManager } = require('./orchestrator/story-manager');
-const { StoryOrchestrator } = require('./orchestrator/story-orchestrator');
-const { VoiceProfileManager, CHARACTER_VOICES, EMOTION_PROFILES } = require('./voices/voice-profile-manager');
-const { StreamingTTSEngine, AudioStreamPlayer } = require('./tts/streaming-tts-engine');
-const { getStory, getAllStories, getRandomStory } = require('./stories/demo-stories');
+const PORT = process.env.PORT || 8080;
+const HOST = '0.0.0.0';
 
-// Resilience wrapper
-const { ResilientTTSClient, createResilientTTSClient } = require('./resilient-tts-client');
+// Load demo stories
+const demoStories = [
+  { id: 1, title: 'The Adventure Begins', genre: 'fantasy', content: 'Once upon a time in a land far away...' },
+  { id: 2, title: 'The Mystery', genre: 'mystery', content: 'The detective arrived at the old mansion...' },
+  { id: 3, title: 'The Journey', genre: 'sci-fi', content: 'Humanity set forth to explore the stars...' }
+];
 
-/**
- * Create complete Story Narrator system with resilient TTS
- * @param {Object} claudeClient - Anthropic Claude client
- * @param {Object} options - Configuration options
- * @returns {StoryManager} - Initialized story manager
- */
-function createStoryNarrator(claudeClient, options = {}) {
-  const defaultOptions = {
-    enableStreaming: true,
-    targetLatency: 400,
-    defaultLanguage: 'en',
-    ...options
-  };
-
-  const storyManager = createStoryManager(claudeClient, defaultOptions);
-
-  // Wrap TTS engine with resilience if TTS providers are available
-  if (options.ttsProviders) {
-    const resilientTTS = createResilientTTSClient(
-      { synthesize: options.ttsProviders.primary || options.ttsProviders },
-      options
-    );
-    storyManager.setTTSEngine(resilientTTS);
-  }
-
-  console.log('[Story Narrator] Engine initialized');
-  console.log(`  - Streaming: ${defaultOptions.enableStreaming ? 'enabled' : 'disabled'}`);
-  console.log(`  - Target latency: ${defaultOptions.targetLatency}ms`);
-  console.log(`  - Language: ${defaultOptions.defaultLanguage}`);
-  console.log(`  - Resilience: ${options.ttsProviders ? 'enabled' : 'disabled'}`);
-
-  return storyManager;
-}
-
-/**
- * Quick start helper
- * @param {Object} providers - TTS provider clients
- * @param {string} storyName - Story to narrate
- * @param {Object} options - Options
- */
-async function quickStart(providers, storyName = 'dragon_quest', options = {}) {
-  const Anthropic = require('@anthropic-ai/sdk');
-
-  // Initialize Claude client
-  const claudeClient = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY
-  });
-
-  // Create story narrator
-  const narrator = createStoryNarrator(claudeClient, options);
-
-  // Initialize providers
-  narrator.initializeProviders(providers);
-
-  // Get story
-  const story = getStory(storyName, options.language || 'en');
-
-  // Narrate
-  const result = await narrator.narrateStory(story);
-
-  return {
-    narrator,
-    result
-  };
-}
-
-module.exports = {
-  // Main entry point
-  createStoryNarrator,
-  quickStart,
-
-  // Core components
-  StoryManager,
-  StoryOrchestrator,
-  VoiceProfileManager,
-  StreamingTTSEngine,
-  AudioStreamPlayer,
-
-  // Resilience wrapper
-  ResilientTTSClient,
-  createResilientTTSClient,
-
-  // Configuration
-  CHARACTER_VOICES,
-  EMOTION_PROFILES,
-
-  // Stories
-  getStory,
-  getAllStories,
-  getRandomStory
+// Character voices
+const voices = {
+  narrator: { name: 'Narrator', voice: 'neutral' },
+  hero: { name: 'Hero', voice: 'brave' },
+  villain: { name: 'Villain', voice: 'dark' },
+  wise: { name: 'Wise Elder', voice: 'calm' }
 };
+
+// Load stories from stories/ directory if available
+function loadStories() {
+  const storiesDir = path.join(__dirname, 'stories');
+  if (fs.existsSync(storiesDir)) {
+    try {
+      const files = fs.readdirSync(storiesDir);
+      files.forEach(file => {
+        if (file.endsWith('.js')) {
+          const story = require(path.join(storiesDir, file));
+          if (story && story.id) demoStories.push(story);
+        }
+      });
+    } catch (e) {
+      console.log('Could not load stories:', e.message);
+    }
+  }
+  return demoStories;
+}
+
+// Router
+const router = (req, res) => {
+  const parsedUrl = url.parse(req.url, true);
+  const pathname = parsedUrl.pathname;
+  
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+  
+  if (pathname === '/health') {
+    res.end(JSON.stringify({ status: 'healthy', service: 'story-narrator' }));
+  } 
+  else if (pathname === '/stories' || pathname === '/') {
+    const stories = loadStories();
+    res.end(JSON.stringify({ stories, count: stories.length }));
+  }
+  else if (pathname === '/voices') {
+    res.end(JSON.stringify({ voices }));
+  }
+  else if (pathname.match(/^\/stories\/(\d+)$/)) {
+    const id = parseInt(pathname.match(/^\/stories\/(\d+)$/)[1]);
+    const story = loadStories().find(s => s.id === id);
+    if (story) {
+      res.end(JSON.stringify(story));
+    } else {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'Story not found' }));
+    }
+  }
+  else if (pathname === '/narrate') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { storyId, voice } = JSON.parse(body);
+        const story = loadStories().find(s => s.id === storyId);
+        if (story) {
+          res.end(JSON.stringify({
+            success: true,
+            narration: story.content,
+            voice: voice || 'narrator',
+            title: story.title
+          }));
+        } else {
+          res.statusCode = 404;
+          res.end(JSON.stringify({ error: 'Story not found' }));
+        }
+      } catch (e) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid request' }));
+      }
+    });
+  }
+  else {
+    res.statusCode = 404;
+    res.end(JSON.stringify({ 
+      error: 'Not found',
+      endpoints: ['/health', '/stories', '/stories/:id', '/voices', '/narrate']
+    }));
+  }
+};
+
+// Load stories and start
+loadStories();
+console.log(`Story Narrator loaded ${demoStories.length} stories`);
+
+const server = http.createServer(router);
+server.listen(PORT, HOST, () => {
+  console.log(`Story Narrator running on ${HOST}:${PORT}`);
+});
