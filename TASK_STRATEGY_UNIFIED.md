@@ -227,12 +227,13 @@ gcloud run deploy alexa-handler --source . --region asia-south1
 - [ ] Deploy Celebrity TTS → ✅ Source ready, Dockerfile exists
 
 ### 🟢 Medium Priority (This Month)
-- [ ] Deploy Story Narrator (apps-enhanced/)
-- [ ] Deploy Celebrity TTS (services/ - has Dockerfile!)
-- [ ] Set up CI/CD pipeline
+- [ ] Deploy Celebrity TTS → ⏳ Python/XTTS - slow build (~10+ min)
+- [ ] Deploy Story Narrator → 🔧 Build failed - needs Dockerfile fix (uses node:18-alpine, app uses ESM)
+- [ ] Deploy Price Tracking → 🔧 Build failed - needs Dockerfile fix
+- [x] Set up CI/CD pipeline → ✅ GitHub Actions workflow created
+- [x] Fix vault search endpoint → ✅ Vault works, endpoint is `/` not `/search`
 - [ ] Terraform infrastructure-as-code
 - [ ] Clean up docs/ directory
-- [ ] Fix vault search endpoint (returns 404 for /search)
 
 ### ⚪ Low Priority (Backlog)
 - [ ] Deploy Email Intelligence
