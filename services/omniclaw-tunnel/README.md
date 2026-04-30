@@ -1,12 +1,22 @@
-# OmniCloud Tunnel
+# OmniCloud Tunnel v2.0
 
-WhatsApp API via OpenClaw, exposed to Cloud Run via Cloudflare Tunnel.
+WhatsApp API via OpenClaw with Queue Management for reliability.
 
 ## Architecture
 
 ```
 Cloud Run ──► Cloudflare Tunnel ──► Mac API ──► OpenClaw ──► WhatsApp
+                    │                   │
+                    └───────────────────┘
+                         Queue Management
 ```
+
+## Features
+
+- **Auto-Queue**: Queries queued during service outages
+- **Recovery**: Automatic processing when service resumes
+- **Timestamps**: Users notified with original query times
+- **Delay Messages**: Context-aware delayed response notifications
 
 ## Setup
 
@@ -17,10 +27,17 @@ cd services/omniclaw-tunnel
 
 ## Endpoints
 
-- `GET /health` - Health check
-- `POST /send` - Send WhatsApp message (body: `{to, message}`)
-- `POST /process` - Get AI response + send reply (body: `{from, text}`)
+- `GET /health` - Health + queue status
+- `POST /send` - Send WhatsApp (to, message)
+- `POST /process` - Process query (auto-queues if service unavailable)
+- `POST /queue/add` - Add query manually
+- `POST /queue/recover` - Trigger recovery
+- `GET /queue/summary` - Queue statistics
+- `GET /queue/pending` - List pending queries
 
-## Cloudflare Tunnel URL
+## Queue Behavior
 
-Tunnel URL changes each restart. Check `tunnel_url.txt` after launching.
+1. User sends query via WhatsApp
+2. If service unavailable → query queued with timestamp
+3. When service recovers → queued queries processed
+4. User receives delayed response with original timestamp
