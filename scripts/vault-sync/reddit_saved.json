@@ -1,0 +1,9 @@
+{
+  "posts": [],
+  "metadata": {
+    "synced_at": "2026-04-28T19:56:12.023Z",
+    "source": "reddit",
+    "error": "API credentials not configured",
+    "setup_url": "https://www.reddit.com/prefs/apps"
+  }
+}

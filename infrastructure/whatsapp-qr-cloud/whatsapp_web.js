@@ -45,7 +45,7 @@ client.on('qr', async (qr) => {
 
 client.on('ready', () => {
     console.log('✅ WhatsApp Client is ready!');
-    console.log('👤 User:', client.info.pushname);
+    console.log('👤 User:', client.info?.pushname || client.info?.wid?.user);
     latestQR = null;
     qrGeneratedAt = null;
 });
@@ -77,26 +77,26 @@ app.get('/health', (req, res) => {
     res.json({
         service: 'omniclaw-whatsapp-web',
         status: 'healthy',
-        connected: client.isReady(),
-        user: info ? info.pushname : null,
-        phone: info ? info.wid.user : null
+        connected: !!client.info,
+        user: info ? (info.pushname || info.wid?.user) : null,
+        phone: info ? (info.wid?.user || info.me?.user) : null
     });
 });
 
 app.get('/whatsapp/status', (req, res) => {
     const info = client.info;
     res.json({
-        connected: client.isReady(),
-        authenticated: client.info !== undefined,
-        user: info ? info.pushname : null,
-        phone: info ? info.wid.user : null,
+        connected: !!client.info,
+        authenticated: !!client.info,
+        user: info ? (info.pushname || info.wid?.user) : null,
+        phone: info ? (info.wid?.user || info.me?.user) : null,
         hasQR: !!latestQR
     });
 });
 
 app.get('/whatsapp/qr-image', async (req, res) => {
     try {
-        if (client.isReady()) {
+        if (client.info) {
             return res.json({ connected: true, message: 'Already connected' });
         }
 
@@ -122,7 +122,7 @@ app.post('/whatsapp/connect', async (req, res) => {
     try {
         console.log('🔄 Initializing WhatsApp client...');
 
-        if (client.isReady()) {
+        if (client.info) {
             return res.json({
                 success: true,
                 connected: true,
@@ -144,7 +144,7 @@ app.post('/whatsapp/connect', async (req, res) => {
                     hint: 'QR expires in 60 seconds'
                 });
             }
-            if (client.isReady()) {
+            if (client.info) {
                 return res.json({
                     success: true,
                     connected: true,
@@ -168,7 +168,7 @@ app.post('/whatsapp/send', async (req, res) => {
     try {
         const { to, message } = req.body;
 
-        if (!client.isReady()) {
+        if (!client.info) {
             return res.status(503).json({ error: 'Not connected to WhatsApp' });
         }
 

@@ -1,0 +1,263 @@
+{
+  "posts": [
+    {
+      "id": "27",
+      "vlSubject": "🎙️ Add Voice Button",
+      "caption": "javascript:(function()%7Bconst%20b=document.createElement('button');b.innerHTML='%F0%9F%8E%99%EF%B8%8F';b.style.cssText='background:linear-gradient(135deg,%2310b981,%23059669);border:none;border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:18px;margin-right:8px;';let%20r=false,m=null,a=%5B%5D;b.onclick=async()=%3E%7Bif(!r)%7Bconst%20s=await%20navigator.mediaDevices.getUserMedia(%7Baudio:true%7D);m=new%20MediaRecorder(s);a=%5B%5D;m.ondataavailable=e=%3Ea.push(e.data);m.onstop=async()=%3E%7Bconst%20blob=new%20Blob(a,%7Btype:'audio/wav'%7D);const%20fd=new%20FormData();fd.append('audio',blob,'recording.wav');const%20res=await%20fetch('http://127.0.0.1:5679/transcribe',%7Bmethod:'POST',body:fd%7D);const%20data=await%20res.json();if(data.text)%7Bconst%20input=document.querySelector('textarea,input%5Btype=%22text%22%5D');if(input)%7Binput.value=data.text;input.dispatchEvent(new%20Event('input',%7Bbubbles:true%7D));setTimeout(()=%3Edocument.querySelector('button%5Baria-label*=%22Send%22%5D,button%5Btype=%22submit%22%5D')?.click(),1000);%7D%7D%7D%7D;m.start();r=true;b.innerHTML=%27%E2%8F%B9%EF%B8%8F%27;b.style.background=%27linear-gradient(135deg,%23ef4444,%23dc2626)%27;%7Delse%7Bm.stop();r=false;b.innerHTML=%27%F0%9F%8E%99%EF%B8%8F%27;b.style.background=%27linear-gradient(135deg,%2310b981,%23059669);%27%7D%7D;const%20input=document.querySelector(%27textarea,input%5Btype=%22text%22%5D%27);if(input)%7Bconst%20p=input.closest(%27form,div%5Bclass*=%22input%22%5D,div%5Bclass*=%22chat%22%5D%27);if(p)%7Bp.insertBefore(b,input);alert(%27%F0%9F%8E%99%EF%B8%8F%20Voice%20button%20added!%27);%7D%7D%7D)();",
+      "url": "javascript:(function()%7Bconst%20b=document.createElement('button');b.innerHTML='%F0%9F%8E%99%EF%B8%8F';b.style.cssText='background:linear-gradient(135deg,%2310b981,%23059669);border:none;border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:18px;margin-right:8px;';let%20r=false,m=null,a=%5B%5D;b.onclick=async()=%3E%7Bif(!r)%7Bconst%20s=await%20navigator.mediaDevices.getUserMedia(%7Baudio:true%7D);m=new%20MediaRecorder(s);a=%5B%5D;m.ondataavailable=e=%3Ea.push(e.data);m.onstop=async()=%3E%7Bconst%20blob=new%20Blob(a,%7Btype:'audio/wav'%7D);const%20fd=new%20FormData();fd.append('audio',blob,'recording.wav');const%20res=await%20fetch('http://127.0.0.1:5679/transcribe',%7Bmethod:'POST',body:fd%7D);const%20data=await%20res.json();if(data.text)%7Bconst%20input=document.querySelector('textarea,input%5Btype=%22text%22%5D');if(input)%7Binput.value=data.text;input.dispatchEvent(new%20Event('input',%7Bbubbles:true%7D));setTimeout(()=%3Edocument.querySelector('button%5Baria-label*=%22Send%22%5D,button%5Btype=%22submit%22%5D')?.click(),1000);%7D%7D%7D%7D;m.start();r=true;b.innerHTML=%27%E2%8F%B9%EF%B8%8F%27;b.style.background=%27linear-gradient(135deg,%23ef4444,%23dc2626)%27;%7Delse%7Bm.stop();r=false;b.innerHTML=%27%F0%9F%8E%99%EF%B8%8F%27;b.style.background=%27linear-gradient(135deg,%2310b981,%23059669);%27%7D%7D;const%20input=document.querySelector(%27textarea,input%5Btype=%22text%22%5D%27);if(input)%7Bconst%20p=input.closest(%27form,div%5Bclass*=%22input%22%5D,div%5Bclass*=%22chat%22%5D%27);if(p)%7Bp.insertBefore(b,input);alert(%27%F0%9F%8E%99%EF%B8%8F%20Voice%20button%20added!%27);%7D%7D%7D)();",
+      "vlTags": [
+        "bookmarks_bar"
+      ],
+      "synced_at": "2026-04-28T19:56:06.101Z",
+      "source": "browser_brave",
+      "folder": "Bookmarks bar",
+      "dateAdded": "2026-02-03T21:56:02.306Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "29",
+      "vlSubject": "Elevate Your Brand With ConvergedHub's AI-led CX Experience",
+      "caption": "https://convergedhub.ai/",
+      "url": "https://convergedhub.ai/",
+      "vlTags": [
+        "bookmarks_bar",
+        "convergedhub"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Bookmarks bar",
+      "dateAdded": "2026-02-06T09:02:30.319Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "31",
+      "vlSubject": "Sauces – Japanned",
+      "caption": "https://gojapanned.com/collections/sauces",
+      "url": "https://gojapanned.com/collections/sauces",
+      "vlTags": [
+        "bookmarks_bar",
+        "gojapanned"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Bookmarks bar",
+      "dateAdded": "2026-03-12T18:36:40.680Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "5",
+      "vlSubject": "Claude Code Analytics - Terminal",
+      "caption": "http://localhost:3333/",
+      "url": "http://localhost:3333/",
+      "vlTags": [
+        "other_bookmarks"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-11T14:53:26.006Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "6",
+      "vlSubject": "Zyler AI",
+      "caption": "https://www.zyler.ai/?ref=microlaunch",
+      "url": "https://www.zyler.ai/?ref=microlaunch",
+      "vlTags": [
+        "other_bookmarks",
+        "zyler"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-22T14:45:49.812Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "7",
+      "vlSubject": "SeoMode - Increase your SEO Score in weeks",
+      "caption": "https://seomode.co/?ref=microlaunch",
+      "url": "https://seomode.co/?ref=microlaunch",
+      "vlTags": [
+        "other_bookmarks",
+        "seomode"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-22T15:06:46.513Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "8",
+      "vlSubject": "Ping: AI-Powered Task Manager",
+      "caption": "https://ping.tm/?ref=microlaunch",
+      "url": "https://ping.tm/?ref=microlaunch",
+      "vlTags": [
+        "other_bookmarks",
+        "ping"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-22T15:20:22.579Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "10",
+      "vlSubject": "Backgrounds Components | 21st.dev - Discover, share, and craft UI components | 21st.dev",
+      "caption": "https://21st.dev/s/background",
+      "url": "https://21st.dev/s/background",
+      "vlTags": [
+        "other_bookmarks",
+        "21st"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-24T14:32:49.687Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "12",
+      "vlSubject": "Nebius AI Studio",
+      "caption": "https://studio.nebius.com/",
+      "url": "https://studio.nebius.com/",
+      "vlTags": [
+        "other_bookmarks",
+        "nebius"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-07-26T11:44:29.665Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "14",
+      "vlSubject": "Enquiry Bengaluru – Ecowell India",
+      "caption": "https://ecowellindia.com/enquiry-blr/?v=674f83e119a5&utm_source=Google+Ads&utm_medium=Search&utm_campaign=_BLR_120725&utm_term=full%20home%20water%20filtration%20system&utm_campaign=Search+Ads_Bangalore+-+Ecowell+India+%237&utm_source=adwords&utm_medium=ppc&hsa_acc=8943941003&hsa_cam=22473050355&hsa_grp=177239718414&hsa_ad=748185188283&hsa_src=g&hsa_tgt=kwd-297514415196&hsa_kw=full%20home%20water%20filtration%20system&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=22473050355",
+      "url": "https://ecowellindia.com/enquiry-blr/?v=674f83e119a5&utm_source=Google+Ads&utm_medium=Search&utm_campaign=_BLR_120725&utm_term=full%20home%20water%20filtration%20system&utm_campaign=Search+Ads_Bangalore+-+Ecowell+India+%237&utm_source=adwords&utm_medium=ppc&hsa_acc=8943941003&hsa_cam=22473050355&hsa_grp=177239718414&hsa_ad=748185188283&hsa_src=g&hsa_tgt=kwd-297514415196&hsa_kw=full%20home%20water%20filtration%20system&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=22473050355",
+      "vlTags": [
+        "other_bookmarks",
+        "ecowellindia"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-08-18T09:41:46.178Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "16",
+      "vlSubject": "(1) Saved Posts | LinkedIn",
+      "caption": "https://www.linkedin.com/my-items/saved-posts/",
+      "url": "https://www.linkedin.com/my-items/saved-posts/",
+      "vlTags": [
+        "other_bookmarks",
+        "linkedin"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-08-25T22:37:22.361Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "17",
+      "vlSubject": "Pocket Agent - Mobile Coding Assistant",
+      "caption": "https://www.pocket-agent.xyz/",
+      "url": "https://www.pocket-agent.xyz/",
+      "vlTags": [
+        "other_bookmarks",
+        "pocket-agent"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-08-27T08:53:03.042Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "19",
+      "vlSubject": "3D Printed RC Planes - Flightory",
+      "caption": "https://flightory.com/",
+      "url": "https://flightory.com/",
+      "vlTags": [
+        "other_bookmarks",
+        "flightory"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-10-27T16:13:53.247Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "21",
+      "vlSubject": "Startup statistics and insights - TrustMRR",
+      "caption": "https://trustmrr.com/stats",
+      "url": "https://trustmrr.com/stats",
+      "vlTags": [
+        "other_bookmarks",
+        "trustmrr"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-11-24T18:42:36.902Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "23",
+      "vlSubject": "OSINT: Finding Email Passwords in Dumps with h8mail – Hackers Arise",
+      "caption": "https://hackers-arise.com/osint-finding-email-passwords-in-dumps-with-h8mail/",
+      "url": "https://hackers-arise.com/osint-finding-email-passwords-in-dumps-with-h8mail/",
+      "vlTags": [
+        "other_bookmarks",
+        "hackers-arise"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2025-12-04T22:25:47.640Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    },
+    {
+      "id": "25",
+      "vlSubject": "OpenClaw Control",
+      "caption": "http://127.0.0.1:18789/overview",
+      "url": "http://127.0.0.1:18789/overview",
+      "vlTags": [
+        "other_bookmarks",
+        "0"
+      ],
+      "synced_at": "2026-04-28T19:56:06.102Z",
+      "source": "browser_brave",
+      "folder": "Other bookmarks",
+      "dateAdded": "2026-02-01T20:31:08.203Z",
+      "vlMood": "engaging",
+      "vlStyle": "link"
+    }
+  ],
+  "metadata": {
+    "synced_at": "2026-04-28T19:56:06.102Z",
+    "source": "browser_bookmarks",
+    "browser": "brave"
+  }
+}

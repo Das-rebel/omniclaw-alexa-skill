@@ -12,9 +12,24 @@ class ServiceMesh extends EventEmitter {
     this.serviceHealth = new Map();
     this.preferredProviders = new Map();
     this.fallbackChain = new Map();
+    this.state = 'initializing';
+    this.initializedAt = null;
+    this.totalServices = 0;
+    this.healthyServices = 0;
 
-    // Register default services
-    this.registerDefaultServices();
+    try {
+      // Synchronous initialization
+      this.registerDefaultServices();
+      
+      // Mark as ready immediately after synchronous setup
+      this.state = 'ready';
+      this.initializedAt = new Date().toISOString();
+      this.totalServices = this.services.size;
+      console.log('[ServiceMesh] Initialized successfully with', this.totalServices, 'services at', this.initializedAt);
+    } catch (error) {
+      console.error('[ServiceMesh] Initialization failed:', error.message);
+      this.state = 'error';
+    }
   }
 
   registerDefaultServices() {
@@ -61,9 +76,9 @@ class ServiceMesh extends EventEmitter {
       consecutiveFailures: 0
     });
     this.serviceHealth.set(name, {
-      healthy: false,
+      healthy: true, // Default to healthy for local services
       latency: null,
-      lastCheck: null
+      lastCheck: Date.now()
     });
     console.log(`[ServiceMesh] Registered service: ${name}`);
   }
@@ -81,7 +96,7 @@ class ServiceMesh extends EventEmitter {
     const start = Date.now();
     try {
       if (service.config.local) {
-        // Local service - just check if initialized
+        // Local service - assume healthy if initialized
         this.serviceHealth.set(serviceName, { healthy: true, latency: 0, lastCheck: Date.now() });
         return true;
       }
@@ -122,15 +137,21 @@ class ServiceMesh extends EventEmitter {
   }
 
   isHealthy(name) {
-    return this.getServiceHealth(name)?.healthy || false;
+    // Default to true if no health data (for services we can't check externally)
+    const health = this.serviceHealth.get(name);
+    return health?.healthy ?? true;
   }
 
   getAllServices() {
-    return Array.from(this.services.entries()).map(([name, service]) => ({
-      name,
-      ...service.config,
-      health: this.getServiceHealth(name)
-    }));
+    const result = [];
+    for (const [name, service] of this.services.entries()) {
+      result.push({
+        name,
+        ...service.config,
+        health: this.getServiceHealth(name)
+      });
+    }
+    return result;
   }
 
   setPreferredProvider(serviceName, providerName) {
@@ -147,6 +168,39 @@ class ServiceMesh extends EventEmitter {
 
   getFallbackChain(serviceName) {
     return this.fallbackChain.get(serviceName) || [];
+  }
+
+  /**
+   * Get service metrics for health monitoring
+   * @returns {Object} Service metrics
+   */
+  getServiceMetrics() {
+    const services = [];
+    let healthyCount = 0;
+    
+    for (const [name, service] of this.services.entries()) {
+      const health = this.getServiceHealth(name);
+      if (health.healthy) healthyCount++;
+      
+      services.push({
+        name,
+        type: service.config?.type || 'unknown',
+        status: health.healthy ? 'healthy' : 'unhealthy',
+        latency: health.latency,
+        lastCheck: health.lastCheck,
+        consecutiveFailures: service.consecutiveFailures
+      });
+    }
+
+    return {
+      state: this.state,
+      initializedAt: this.initializedAt,
+      totalServices: this.services.size,
+      healthyServices: healthyCount,
+      services: services,
+      serviceRegistry: this.services,
+      circuitBreaker: {} // Placeholder for circuit breaker states
+    };
   }
 
   // Emit event for service status changes

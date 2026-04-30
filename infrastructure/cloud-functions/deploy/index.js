@@ -122,18 +122,125 @@ let conversationMemory = null;
 let attentionWeightedMemory = null;
 let taskGuidedCompressor = null;
 let omniClawIntegration = null;
+let startupComplete = false;
+let startupStarted = false;
+
+/**
+ * Warmup endpoint for Cloud Run - triggers lazy initialization asynchronously.
+ * Returns 200 immediately while initialization happens in background.
+ */
+exports.startupHandler = async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  // If already started or starting, return immediately
+  if (startupComplete || startupStarted) {
+    res.json({
+      status: startupComplete ? 'ready' : 'starting',
+      timestamp: new Date().toISOString(),
+      message: startupComplete ? 'Already initialized' : 'Initialization in progress'
+    });
+    return;
+  }
+
+  startupStarted = true;
+  console.log('[startup] Beginning async initialization...');
+
+  // Respond immediately, initialize in background
+  res.json({
+    status: 'starting',
+    timestamp: new Date().toISOString(),
+    message: 'Initialization started'
+  });
+
+  // Initialize asynchronously so Cloud Run doesn't timeout
+  setImmediate(async () => {
+    try {
+      initializeOmniClaw2();
+      startupComplete = true;
+      console.log('[startup] OmniClaw 2.0 components initialized');
+    } catch (e) {
+      console.error('[startup] Initialization failed:', e.message);
+    }
+  });
+};
 
 function initializeOmniClaw2() {
   if (!agentOrchestrator) {
-    console.log('🚀 Initializing OmniClaw 2.0 components...');
-    agentOrchestrator = new AgentOrchestrator();
-    serviceMesh = new ServiceMesh();
-    personaGenerator = new PersonaGenerator();
-    conversationMemory = new ConversationMemory();
-    attentionWeightedMemory = new AttentionWeightedMemory();
-    taskGuidedCompressor = new TaskGuidedCompressor(attentionWeightedMemory);
-    omniClawIntegration = new OmniClawIntegration();
-    console.log('✅ OmniClaw 2.0 components ready');
+    console.log('Initializing OmniClaw 2.0 components...');
+    
+    // Wrap each initialization in try-catch to prevent one failure from breaking all
+    try {
+      agentOrchestrator = new AgentOrchestrator();
+      console.log('AgentOrchestrator initialized:', agentOrchestrator.state);
+    } catch (e) {
+      console.error('AgentOrchestrator init failed:', e.message);
+      // Create a minimal fallback orchestrator
+      agentOrchestrator = {
+        state: 'error',
+        processRequest: async () => ({ success: false, error: e.message }),
+        getPerformanceMetrics: () => ({ state: 'error', error: e.message })
+      };
+    }
+    
+    try {
+      serviceMesh = new ServiceMesh();
+      console.log('ServiceMesh initialized:', serviceMesh.state, 'with', serviceMesh.services?.size || 0, 'services');
+    } catch (e) {
+      console.error('ServiceMesh init failed:', e.message);
+      serviceMesh = {
+        state: 'error',
+        getServiceMetrics: () => ({ state: 'error' })
+      };
+    }
+    
+    try {
+      personaGenerator = new PersonaGenerator();
+      console.log('PersonaGenerator initialized');
+    } catch (e) {
+      console.error('PersonaGenerator init failed:', e.message);
+      personaGenerator = null;
+    }
+    
+    try {
+      conversationMemory = new ConversationMemory();
+      console.log('ConversationMemory initialized');
+    } catch (e) {
+      console.error('ConversationMemory init failed:', e.message);
+      conversationMemory = null;
+    }
+    
+    try {
+      attentionWeightedMemory = new AttentionWeightedMemory();
+      console.log('AttentionWeightedMemory initialized');
+    } catch (e) {
+      console.error('AttentionWeightedMemory init failed:', e.message);
+      attentionWeightedMemory = null;
+    }
+    
+    try {
+      taskGuidedCompressor = new TaskGuidedCompressor(attentionWeightedMemory);
+      console.log('TaskGuidedCompressor initialized');
+    } catch (e) {
+      console.error('TaskGuidedCompressor init failed:', e.message);
+      taskGuidedCompressor = null;
+    }
+    
+    try {
+      omniClawIntegration = new OmniClawIntegration();
+      console.log('OmniClawIntegration initialized');
+    } catch (e) {
+      console.error('OmniClawIntegration init failed:', e.message);
+      omniClawIntegration = null;
+    }
+    
+    console.log('OmniClaw 2.0 components ready. AgentOrchestrator state:', agentOrchestrator.state);
   }
   return { agentOrchestrator, serviceMesh, personaGenerator, conversationMemory, attentionWeightedMemory, taskGuidedCompressor, omniClawIntegration };
 }
@@ -472,16 +579,28 @@ function detectAccentFromInput(text) {
 
 
 /**
- * Health check endpoint with detailed component status
+ * Health check endpoint - lightweight status check.
+ * For full component status, call /startup first, then check here.
  */
 exports.healthHandler = async (req, res) => {
-  const resilienceHealth = getHealthStatus();
-  const { agentOrchestrator, serviceMesh, personaGenerator, attentionWeightedMemory } = initializeOmniClaw2();
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
 
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  const resilienceHealth = getHealthStatus();
+
+  // Get actual state from components
+  const orchestratorState = agentOrchestrator?.state || 'not_initialized';
+  const meshState = serviceMesh?.state || 'not_initialized';
+  
+  // Lightweight check - don't re-initialize components on every health check
   let agentMetrics = {};
   let serviceMetrics = {};
-  let clientHealth = {};
-
   try {
     if (agentOrchestrator && agentOrchestrator.getPerformanceMetrics) {
       agentMetrics = agentOrchestrator.getPerformanceMetrics();
@@ -498,75 +617,35 @@ exports.healthHandler = async (req, res) => {
     serviceMetrics = { error: e.message };
   }
 
-  // Get detailed client health status
-  try {
-    const { testClientHealth, originalClients } = require('./resilient-clients');
-    const clientNames = Object.keys(originalClients);
-    const healthPromises = clientNames.map(async (name) => {
-      try {
-        const healthy = await testClientHealth(name);
-        return { name, status: healthy ? 'available' : 'unavailable' };
-      } catch (e) {
-        return { name, status: 'error', error: e.message };
-      }
-    });
-    const results = await Promise.all(healthPromises);
-    results.forEach(r => {
-      clientHealth[r.name] = r.status;
-    });
-  } catch (e) {
-    console.error('Client health check error:', e.message);
-  }
-
-  // Get service mesh registered services
-  let meshServices = [];
-  if (serviceMesh && serviceMesh.serviceRegistry) {
-    for (const [serviceType, instances] of serviceMesh.serviceRegistry.entries()) {
-      for (const [instanceId, instance] of instances.entries()) {
-        meshServices.push({
-          type: serviceType,
-          id: instanceId,
-          health: instance.healthStatus,
-          requests: instance.metrics.requestCount,
-          circuitBreaker: instance.circuitBreaker.state
-        });
-      }
-    }
-  }
-
-  const workingClients = Object.entries(clientHealth).filter(([_, s]) => s === 'available').map(([n, _]) => n);
-  const unavailableClients = Object.entries(clientHealth).filter(([_, s]) => s !== 'available').map(([n, _]) => n);
+  // Determine overall status based on component states
+  const overallStatus = 
+    orchestratorState === 'ready' && meshState === 'ready' ? 'healthy' :
+    orchestratorState === 'error' || meshState === 'error' ? 'degraded' :
+    'initializing';
 
   res.json({
-    status: 'healthy',
+    status: overallStatus,
     timestamp: new Date().toISOString(),
     version: '2.0.0',
-    message: 'OmniClaw 2.0 Personal Assistant is operational',
+    message: overallStatus === 'healthy' 
+      ? 'OmniClaw 2.0 Personal Assistant is operational'
+      : overallStatus === 'initializing'
+        ? 'OmniClaw 2.0 is initializing'
+        : 'OmniClaw 2.0 is running in degraded mode',
     components: {
+      initialized: startupComplete,
+      initializing: !startupComplete && startupStarted,
       resilience: 'active',
       circuitBreakers: resilienceHealth.circuitBreakers || [],
-      clients: {
-        total: Object.keys(clientHealth).length,
-        working: workingClients.length,
-        unavailable: unavailableClients.length,
-        available: workingClients,
-        unavailableList: unavailableClients
-      },
-      agentOrchestrator: agentMetrics.system ? 'active' : 'initializing',
-      serviceMesh: serviceMetrics.totalServices ? 'active' : 'initializing',
-      serviceMeshDetails: {
-        totalServices: meshServices.length,
-        services: meshServices,
-        metrics: serviceMetrics
-      },
+      agentOrchestrator: orchestratorState,
+      serviceMesh: meshState,
       personaGenerator: personaGenerator ? 'available' : 'unavailable',
       attentionWeightedMemory: attentionWeightedMemory ? 'active' : 'inactive',
       taskGuidedCompressor: taskGuidedCompressor ? 'active' : 'inactive',
-      storyOrchestrator: 'available',
+      storyOrchestrator: storyOrchestrator ? 'available' : 'not_initialized',
       region: 'asia-south1'
     },
-    performance: agentMetrics.system || {},
-    serviceHandler: meshServices.length > 0 ? `Mesh managing ${meshServices.length} services` : 'Standalone mode'
+    performance: agentMetrics.system || {}
   });
 };
 
@@ -737,15 +816,128 @@ exports.alexaHandler = async (req, res) => {
   }
 
   try {
+    // Get body - Express parses JSON automatically
     const body = req.body || {};
+    
+    // Log body content
+    console.log('[Alexa] body:', JSON.stringify(body));
+    console.log('[Alexa] body.text:', body.text);
+    console.log('[Alexa] body.request:', body.request?.type);
 
-    // Log the request
-    console.log('Alexa request received:', {
-      version: body.version,
-      type: body.request?.type,
-      requestId: body.request?.requestId,
-      intent: body.request?.intent?.name
-    });
+    // Handle plain text format (for WhatsApp compatibility) - HIGHEST PRIORITY
+    if (body.text) {
+      console.log('[Alexa] Handling text query directly:', body.text.substring(0, 50));
+      
+      // Check for vault keywords BEFORE AI query
+      const queryLower = body.text.toLowerCase();
+      const vaultKeywords = ['vault', 'search my vault', 'find in my vault', 'my saved', 'bookmarks', 'what do i have saved', 'remember', 'knowledge graph'];
+      const isVaultQuery = vaultKeywords.some(k => queryLower.includes(k));
+      
+      if (isVaultQuery) {
+        console.log('[Alexa] Detected vault query:', body.text);
+        try {
+          const VaultClient = require('./clients/vault_client');
+          const vault = new VaultClient();
+          
+          // Extract search term
+          let searchTerm = queryLower
+            .replace(/^vault\s*/gi, '')
+            .replace(/search\s*(my)?\s*(vault|bookmarks|saved)?\s*(for)?\s*/gi, '')
+            .replace(/find\s*(in)?\s*(my)?\s*(vault)?\s*/gi, '')
+            .replace(/what\s*(do)?\s*(i\s*)?(have)?\s*(saved)?\s*/gi, '')
+            .replace(/remember\s*/gi, '')
+            .replace(/knowledge\s*graph\s*/gi, '')
+            .replace(/my\s*(bookmarks|saved)\s*/gi, '')
+            .trim();
+          
+          if (!searchTerm) searchTerm = body.text;
+          
+          const result = vault.findKnowledge(searchTerm);
+          const total = result.topics.length + result.skills.length + result.vaultPosts.length;
+          
+          let responseText;
+          if (total > 0) {
+            responseText = `🗄️ *VAULT SEARCH*
+━━━━━━━━━━━━━━━━━━
+`;
+            responseText += `📊 Results for "${searchTerm}": ${total} items\n\n`;
+            
+            // Add vault posts with full details (up to 10)
+            if (result.vaultPosts.length > 0) {
+              const showPosts = result.vaultPosts.slice(0, 10);
+              showPosts.forEach((p, i) => {
+                const title = (p.vlSubject || p.caption || 'Untitled').substring(0, 70);
+                const summary = (p.caption || p.vlSubject || '').substring(0, 120);
+                const url = p.url || p.permalink || '';
+                const channel = p.source || p.platform || 'Unknown';
+                const date = p.timestamp ? new Date(p.timestamp).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '';
+                
+                responseText += `${i+1}. *${title}*\n`;
+                if (summary && summary !== title) responseText += `   📝 ${summary}...\n`;
+                responseText += `   📱 ${channel}`;
+                if (date) responseText += ` | 📅 ${date}`;
+                responseText += '\n';
+                if (url) responseText += `   🔗 ${url}\n`;
+                responseText += '\n';
+              });
+              
+              if (result.vaultPosts.length > 10) {
+                responseText += `✨ +${result.vaultPosts.length - 10} more results`;
+              }
+            }
+            
+            // Add topics/skills count
+            if (result.topics.length > 0) responseText += `\n📁 Topics: ${result.topics.length}`;
+            if (result.skills.length > 0) responseText += `\n🎯 Skills: ${result.skills.length}`;
+          } else {
+            responseText = `❌ No results for "${searchTerm}" in your vault.`;
+          }
+          
+          res.json({
+            version: '1.0',
+            response: {
+              outputSpeech: { type: 'PlainText', text: responseText },
+              shouldEndSession: false
+            },
+            sessionAttributes: { lastQuery: body.text, version: '2.0', handler: 'vault' }
+          });
+          return;
+        } catch (e) {
+          console.error('[Alexa] Vault error:', e.message);
+        }
+      }
+      
+      try {
+        // Call AI for non-vault queries
+        const { multiProviderQuery } = require('./resilient-clients');
+        const aiResponse = await multiProviderQuery(body.text);
+        
+        res.json({
+          version: '1.0',
+          response: {
+            outputSpeech: { type: 'PlainText', text: aiResponse },
+            shouldEndSession: false
+          },
+          sessionAttributes: {
+            lastQuery: body.text,
+            conversationCount: 1,
+            lastServiceHandler: 'multiProviderQuery',
+            version: '2.0'
+          }
+        });
+        return;
+      } catch (e) {
+        console.error('[Alexa] AI error:', e.message);
+        res.json({
+          version: '1.0',
+          response: {
+            outputSpeech: { type: 'PlainText', text: "I'm having trouble connecting to my AI. Please try again." },
+            shouldEndSession: false
+          }
+        });
+        return;
+      }
+    }
 
     // Handle LaunchRequest
     if (body.request?.type === 'LaunchRequest' || !body.request) {
@@ -886,6 +1078,7 @@ exports.alexaHandler = async (req, res) => {
 
           // Extract search term (remove vault keywords)
           let searchTerm = queryLower
+            .replace(/^[\^]?vault\s*/gi, '')  // Strip leading ^vault or vault
             .replace(/search\s*(my)?\s*(vault|bookmarks|saved)?\s*(for)?\s*/gi, '')
             .replace(/find\s*(in)?\s*(my)?\s*(vault)?\s*/gi, '')
             .replace(/what\s*(do)?\s*(i\s*)?(have)?\s*(saved)?\s*/gi, '')
@@ -898,10 +1091,30 @@ exports.alexaHandler = async (req, res) => {
           const result = vault.findKnowledge(searchTerm);
           const total = result.topics.length + result.skills.length + result.vaultPosts.length;
           let responseText = '';
+          
+          // Enhanced response with detailed results for WhatsApp
+          let detailedResults = {
+            query: searchTerm,
+            total: total,
+            posts: [],
+            topics: result.topics,
+            skills: result.skills
+          };
+          
           if (total > 0) {
             responseText = `${vaultName} here. Found ${total} items for "${searchTerm}": `;
             if (result.vaultPosts.length > 0) {
               responseText += `${result.vaultPosts.length} posts, `;
+              // Add detailed post info for WhatsApp
+              detailedResults.posts = result.vaultPosts.map((p, idx) => ({
+                index: idx + 1,
+                subject: p.vlSubject || 'No subject',
+                caption: (p.caption || '').substring(0, 150),
+                url: p.url || p.permalink || '',
+                tags: p.vlTags || [],
+                source: p.source || 'instagram',
+                syncedAt: p.synced_at || p.vlProcessedAt || ''
+              }));
             }
             if (result.topics.length > 0) {
               responseText += `${result.topics.length} topics, `;
@@ -920,55 +1133,32 @@ exports.alexaHandler = async (req, res) => {
 
           res.json({
             version: '1.0',
-            response: { outputSpeech: { type: 'PlainText', text: responseText }, shouldEndSession: false },
+            response: { 
+              outputSpeech: { type: 'PlainText', text: responseText }, 
+              shouldEndSession: false 
+            },
+            vaultResults: detailedResults,  // Detailed results for WhatsApp parsing
             sessionAttributes: buildSessionAttributes(incomingSessionAttributes, 'vault_search', { lastQuery: query, version: '2.0' })
           });
           return;
         }
 
         try {
-          // Get task-specific compressed context using attention-weighted memory
-          const compressedContext = await taskGuidedCompressor.compressForTask(sessionId, query);
-          compressionStats = {
-            originalMessages: compressedContext.originalCount,
-            compressedMessages: compressedContext.compressedCount,
-            compressionRatio: compressedContext.compressionRatio,
-            tokenCount: compressedContext.tokenCount,
-            taskType: taskGuidedCompressor.classifyTask(query)
-          };
+          // Directly call multiProviderQuery for AI responses
+          const result = await multiProviderQuery(query);
+          let responseText = result || "I'm OmniClaw 2.0, ready to help!";
+          serviceHandler = 'multiProviderQuery';
 
-          // Use agent orchestrator for intelligent processing with compressed context
-          const result = await agentOrchestrator.processRequest(query, {
-            userId: 'alexa_user',
-            sessionId: sessionId,
-            intent: 'query',
-            usePersona: true,
-            conversationHistory: compressedContext.context,
-            conversationCount: conversationCount,
-            lastTopic: lastTopic,
-            personaType: currentPersona
-          });
-
-          // Store assistant response in attention-weighted memory
-          let responseText = result.response || result.data?.response || result.message || "I'm OmniClaw 2.0";
-          attentionWeightedMemory.storeMessage(sessionId, 'assistant', responseText, { serviceUsed: result.serviceUsed });
-
-          // Log which service handled the request
-          if (result.serviceUsed) {
-            serviceHandler = result.serviceUsed;
-            console.log(`Request handled by: ${serviceHandler}`);
-          }
-
-          // Apply persona to response using stored persona type
+          // Apply persona to response
           try {
-            const persona = await personaGenerator.generatePersona('alexa_user', {
-              query,
-              personaType: currentPersona
-            });
+            const persona = await personaGenerator.generatePersona('alexa_user', { query, personaType: currentPersona });
             responseText = await personaGenerator.applyPersonaToResponse(responseText, persona, { query });
-          } catch (e) {
-            // Use default response
+          } catch (e2) {
+            // Use raw response
           }
+
+          // Store in attention-weighted memory
+          attentionWeightedMemory.storeMessage(sessionId, 'assistant', responseText, { serviceUsed: 'ai' });
 
           res.json({
             version: '1.0',

@@ -1,0 +1,9 @@
+{
+  "posts": [],
+  "metadata": {
+    "synced_at": "2026-04-28T19:56:33.944Z",
+    "source": "facebook",
+    "error": "No Facebook credentials configured",
+    "setup_url": "https://developers.facebook.com"
+  }
+}

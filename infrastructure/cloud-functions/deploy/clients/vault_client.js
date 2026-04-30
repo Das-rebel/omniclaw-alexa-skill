@@ -121,9 +121,14 @@ class VaultClient {
 
     try {
       if (fs.existsSync(this.knowledgeGraphPath)) {
+        const stat = fs.statSync(this.knowledgeGraphPath);
+        console.log('[VaultClient] Loading KG from', this.knowledgeGraphPath, 'size:', stat.size);
         const data = JSON.parse(fs.readFileSync(this.knowledgeGraphPath, 'utf8'));
+        console.log('[VaultClient] KG loaded:', data.nodes?.length, 'nodes');
         this.cache.set(cacheKey, { data, timestamp: Date.now() });
         return data;
+      } else {
+        console.log('[VaultClient] KG file not found:', this.knowledgeGraphPath);
       }
     } catch (error) {
       console.error('[VaultClient] Error loading knowledge graph:', error.message);
@@ -184,15 +189,35 @@ class VaultClient {
     // Search nodes in knowledge graph
     for (const node of (kg.nodes || [])) {
       const nameLower = node.name.toLowerCase();
+      const contentLower = (node.content || '').toLowerCase();
       const typeLower = node.type.toLowerCase();
+      const searchStr = nameLower + ' ' + contentLower;
 
-      if (nameLower.includes(queryLower) || queryLower.includes(nameLower)) {
+      // Check if query matches name or content
+      if (searchStr.includes(queryLower) || queryLower.includes(nameLower)) {
         if (typeLower === 'topic') results.topics.push(node);
         else if (typeLower === 'skill') results.skills.push(node);
         else if (typeLower === 'place') results.places.push(node);
         else if (typeLower === 'food' || typeLower === 'cuisine') results.food.push(node);
+        else if (typeLower === 'twitter_tweet') {
+          // Limit twitter tweets to prevent memory issues
+          if (results.vaultPosts.length < 100) {
+            results.vaultPosts.push({
+              id: node.id,
+              vlSubject: node.name,
+              vlTags: (node.metadata ? node.metadata.topics : []) || [],
+              caption: node.content || node.name,
+              url: node.url,
+              source: node.platform || 'twitter',
+              timestamp: node.timestamp || node.createdAt || '',
+              author: node.author || ''
+            });
+          }
+        }
       }
     }
+    
+    console.log('[VaultClient] findKnowledge: searched', (kg.nodes ? kg.nodes.length : 0), 'nodes, found', results.vaultPosts.length, 'posts for "' + query + '"');
 
     // Search relationships
     for (const rel of (kg.relationships || [])) {
@@ -201,27 +226,35 @@ class VaultClient {
       }
     }
 
-    // Also search vault posts (Instagram/Twitter scraped content)
+    // Also search vault posts (Instagram scraped content) - MERGE with existing results
     const vaultPosts = this.loadVaultPosts();
     if (Array.isArray(vaultPosts)) {
       const matchedPosts = vaultPosts.filter(post => {
         const searchText = [
           post.vlSubject || '',
-          post.vlTags?.join(' ') || '',
+          post.vlTags ? post.vlTags.join(' ') : '',
           post.caption || '',
           post.permalink || ''
         ].join(' ').toLowerCase();
         return searchText.includes(queryLower);
-      }).slice(0, 10); // Limit to 10 results
+      }).slice(0, 10); // Limit Instagram results to 10
 
-      results.vaultPosts = matchedPosts.map(p => ({
-        id: p.id,
-        vlSubject: p.vlSubject,
-        vlTags: p.vlTags,
-        caption: p.caption?.substring(0, 100),
-        url: p.permalink
-      }));
+      // Merge Instagram results with existing vaultPosts
+      matchedPosts.forEach(p => {
+        if (results.vaultPosts.length < 100) {
+          results.vaultPosts.push({
+            id: p.id,
+            vlSubject: p.vlSubject,
+            vlTags: p.vlTags,
+            caption: p.caption ? p.caption.substring(0, 100) : '',
+            url: p.permalink,
+            source: 'instagram'
+          });
+        }
+      });
     }
+    
+    console.log('[VaultClient] findKnowledge: total posts:', results.vaultPosts.length);
 
     return results;
   }
