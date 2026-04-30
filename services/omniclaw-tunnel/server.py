@@ -15,6 +15,9 @@ import os
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
+import sys
+sys.path.insert(0, os.path.expanduser("~/omniclaw-fresh/db"))
+from resilience_db import *
 
 # Config
 PORT = 3000
@@ -62,6 +65,7 @@ class QueueManager:
         }
         self.queue.append(entry)
         self._save(QUEUE_FILE, self.queue)
+        queue_add(text, from_jid, from_jid, group_jid, "whatsapp", datetime.now().isoformat())
         return entry
     
     def get_pending(self):
@@ -131,6 +135,7 @@ def send_whatsapp(target, message):
         
         if result.returncode == 0:
             service_available = True
+            log_interaction("outbound", "919003349852@s.whatsapp.net", target, message[:100], status="sent")
             return {"success": True, "target": target}
         else:
             raise Exception(result.stderr)
@@ -215,10 +220,21 @@ class OmniHandler(BaseHTTPRequestHandler):
                 "service": "omniclaw-fresh",
                 "service_available": service_available,
                 "last_failure": last_failure,
-                "queue": queue.get_summary()
+                "queue": queue.get_summary(),
+                "db_summary": {
+                    "contacts": len(list_contacts()),
+                    "groups": len(list_groups()),
+                    "interactions": len(get_recent_interactions(9999))
+                }
             })
         elif self.path == '/queue/summary':
             self.send_json(queue.get_summary())
+        elif self.path == '/db/contacts':
+            self.send_json({"contacts": list_contacts()})
+        elif self.path == '/db/groups':
+            self.send_json({"groups": list_groups()})
+        elif self.path == '/db/summary':
+            self.send_json({"summary": export_all()})
         elif self.path == '/queue/pending':
             self.send_json({"pending": queue.get_pending()})
         else:
